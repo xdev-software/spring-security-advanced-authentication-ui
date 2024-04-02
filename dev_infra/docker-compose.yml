@@ -62,7 +62,7 @@ services:
     volumes:
       - ./oidc-user-config.json:/tmp/config/oidc-user-config.json:ro
     ports:
-      - '4011:80'
+      - '4011:8080'
     deploy:
       resources:
         limits:
