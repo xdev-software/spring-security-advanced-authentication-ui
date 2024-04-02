@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -50,6 +51,16 @@ public class AdvancedLoginPageGeneratingFilter
 	protected AdditionalStylingData additionalStylingData;
 	
 	protected String header = "";
+	
+	protected String formLoginUsernameText = "Username";
+	
+	protected String formLoginPasswordText = "Password";
+	
+	protected String formLoginRememberMeText = "Remember me on this computer";
+	
+	protected String formLoginSignInText = "Sign in";
+	
+	protected String ssoLoginHeaderText = "Login with";
 	
 	protected String footer = "";
 	
@@ -108,9 +119,47 @@ public class AdvancedLoginPageGeneratingFilter
 		return this;
 	}
 	
+	public AdvancedLoginPageGeneratingFilter additionalStylingData(
+		final Consumer<AdditionalStylingData.Builder> builderConsumer)
+	{
+		final AdditionalStylingData.Builder builder = new AdditionalStylingData.Builder();
+		builderConsumer.accept(builder);
+		return this.additionalStylingData(builder.build());
+	}
+	
 	public AdvancedLoginPageGeneratingFilter header(final String header)
 	{
 		this.header = Objects.requireNonNullElse(header, "");
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter formLoginUsernameText(final String formLoginUsernameText)
+	{
+		this.formLoginUsernameText = formLoginUsernameText;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter formLoginPasswordText(final String formLoginPasswordText)
+	{
+		this.formLoginPasswordText = formLoginPasswordText;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter formLoginRememberMeText(final String formLoginRememberMeText)
+	{
+		this.formLoginRememberMeText = formLoginRememberMeText;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter formLoginSignInText(final String formLoginSignInText)
+	{
+		this.formLoginSignInText = formLoginSignInText;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter ssoLoginHeaderText(final String ssoLoginHeaderText)
+	{
+		this.ssoLoginHeaderText = ssoLoginHeaderText;
 		return this;
 	}
 	
@@ -210,6 +259,7 @@ public class AdvancedLoginPageGeneratingFilter
 			+ "'>";
 	}
 	
+	@SuppressWarnings("java:S1192")
 	protected String createFormLogin(final HttpServletRequest request, final String contextPath)
 	{
 		if(!this.formLoginEnabled)
@@ -218,26 +268,35 @@ public class AdvancedLoginPageGeneratingFilter
 		}
 		
 		return "<form class=\"mb-3\" method=\"post\" action=\"" + contextPath + this.authenticationUrl + "\">"
-			+ "<div>"
-			+ "  <label for='username'>Username</label>"
-			+ "  <input type='text' class=\"form-control\" name=\"" + this.usernameParameter + "\""
-			+ " id='username' placeholder=\"Username\" required autofocus>"
-			+ "</div><div>"
-			+ "  <label for='password'>Password</label>"
-			+ "  <input type='password' class=\"form-control\" name=\"" + this.passwordParameter + "\""
-			+ " id='password' placeholder=\"Password\" required>"
+			+ "<div class='form-floating'>"
+			+ "  <input type='text' class='form-control' name=\"" + this.usernameParameter + "\""
+			+ " id='username' placeholder=\"" + this.formLoginUsernameText + "\" required autofocus>"
+			+ "  <label for='username'>" + this.formLoginUsernameText + "</label>"
+			+ "</div><div class='form-floating'>"
+			+ "  <input type='password' class='form-control' name=\"" + this.passwordParameter + "\""
+			+ " id='password' placeholder=\"" + this.formLoginPasswordText + "\" required>"
+			+ "  <label for='password'>" + this.formLoginPasswordText + "</label>"
 			+ "</div>"
 			+ this.createRememberMe(this.rememberMeParameter)
 			+ this.renderHiddenInputs(request)
-			+ "<button class=\"btn btn-block btn-primary w-100\" type=\"submit\">Sign in</button>"
+			+ this.createFormLoginSignInButton()
 			+ "</form>";
+	}
+	
+	protected String createFormLoginSignInButton()
+	{
+		return "<button class=\"btn btn-block btn-primary w-100\" type=\"submit\">"
+			+ this.formLoginSignInText
+			+ "</button>";
 	}
 	
 	@Override
 	protected String createRememberMe(final String paramName)
 	{
 		return "<div class=\"form-check text-start my-2\">"
-			+ "<label for='remember-me' class=\"form-check-label\">Remember me on this computer</label>"
+			+ "<label for='remember-me' class=\"form-check-label\">"
+			+ this.formLoginRememberMeText
+			+ "</label>"
 			+ "<input class=\"form-check-input\" type='checkbox' name='" + paramName + "' id='remember-me'/>"
 			+ "</div>";
 	}
@@ -249,7 +308,9 @@ public class AdvancedLoginPageGeneratingFilter
 	
 	protected String createHeaderLoginWith()
 	{
-		return "<h5 class=\"h5 mb-2 fw-normal\">Login with</h5>";
+		return "<h5 class=\"h5 mb-2 fw-normal\">"
+			+ this.ssoLoginHeaderText
+			+ "</h5>";
 	}
 	
 	protected String createOAuth2LoginPagePart(final String contextPath)
@@ -325,12 +386,57 @@ public class AdvancedLoginPageGeneratingFilter
 		StylingDefinition main
 	)
 	{
-		public static AdditionalStylingData empty()
+		public static class Builder
 		{
-			return new AdditionalStylingData(
-				null,
-				null,
-				null);
+			protected StylingDefinition body;
+			protected StylingDefinition container;
+			protected StylingDefinition main;
+			
+			public Builder body(final StylingDefinition body)
+			{
+				this.body = body;
+				return this;
+			}
+			
+			public Builder body(final Consumer<StylingDefinition.Builder> builderConsumer)
+			{
+				return this.body(this.buildStylingDefinition(builderConsumer));
+			}
+			
+			public Builder container(final StylingDefinition container)
+			{
+				this.container = container;
+				return this;
+			}
+			
+			public Builder container(final Consumer<StylingDefinition.Builder> builderConsumer)
+			{
+				return this.container(this.buildStylingDefinition(builderConsumer));
+			}
+			
+			public Builder main(final StylingDefinition main)
+			{
+				this.main = main;
+				return this;
+			}
+			
+			public Builder main(final Consumer<StylingDefinition.Builder> builderConsumer)
+			{
+				return this.main(this.buildStylingDefinition(builderConsumer));
+			}
+			
+			protected StylingDefinition buildStylingDefinition(
+				final Consumer<StylingDefinition.Builder> builderConsumer)
+			{
+				final StylingDefinition.Builder builder = new StylingDefinition.Builder();
+				builderConsumer.accept(builder);
+				return builder.build();
+			}
+			
+			public AdditionalStylingData build()
+			{
+				return new AdditionalStylingData(this.body, this.container, this.main);
+			}
 		}
 		
 		public Optional<String> classNames(final Function<AdditionalStylingData, StylingDefinition> accessor)
@@ -342,7 +448,7 @@ public class AdvancedLoginPageGeneratingFilter
 		public Optional<String> style(final Function<AdditionalStylingData, StylingDefinition> accessor)
 		{
 			return Optional.ofNullable(accessor.apply(this))
-				.map(StylingDefinition::style);
+				.map(StylingDefinition::styleString);
 		}
 	}
 }
