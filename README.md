@@ -4,6 +4,23 @@
 
 # spring-security-advanced-authentication-ui
 
+## Usage
+
+The library provides an adapter that can be used like this:
+```java
+public SecurityFilterChain configure(final HttpSecurity http) throws Exception
+{
+    // Changing the text "Login with" to "Sign in with"
+    http.with(new AdvancedLoginPageAdapter<>(http), c -> c
+            .customizeLoginPage(p -> p.ssoLoginHeaderText("Sign in with")))
+        .oauth2Login(c -> 
+            // ...
+        )
+    // ...
+}
+```
+
+For a more detailed scenario is available in the [demo](./spring-security-advanced-authentication-ui-demo/).
 
 ## Installation
 [Installation guide for the latest release](https://github.com/xdev-software/spring-security-advanced-authentication-ui/releases/latest#Installation)
