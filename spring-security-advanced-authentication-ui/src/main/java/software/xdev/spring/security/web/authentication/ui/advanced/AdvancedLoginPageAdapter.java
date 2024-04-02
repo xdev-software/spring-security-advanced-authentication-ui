@@ -35,6 +35,11 @@ public class AdvancedLoginPageAdapter<H extends HttpSecurityBuilder<H>>
 	AdvancedLogoutPageGeneratingFilter,
 	H>
 {
+	public AdvancedLoginPageAdapter(final HttpSecurity http)
+	{
+		this(b -> b.httpSecurity(http));
+	}
+	
 	public AdvancedLoginPageAdapter(
 		final Consumer<InitConfiguration<AdvancedLoginPageGeneratingFilter, AdvancedLogoutPageGeneratingFilter>> c)
 	{
