@@ -1,3 +1,6 @@
+# 1.0.1
+* Fix NPE when ``additionalStylingData`` is not set
+
 # 1.0.0
 <i>Initial release</i>
 * All methods and functionality are designed to be overwritable (at least protected)
