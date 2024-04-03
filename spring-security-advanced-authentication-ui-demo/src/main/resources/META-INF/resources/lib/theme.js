@@ -1,6 +1,4 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-    // document.documentElement.setAttribute('data-bs-theme', (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
-
     let div = document.createElement('div');
     div.className = "dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle";
     div.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="d-none">
