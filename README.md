@@ -4,6 +4,16 @@
 
 # spring-security-advanced-authentication-ui
 
+Modernizes the default Spring Web Authentication UI and makes it easier customizable.
+
+<details><summary>Show demo</summary>
+
+<p align="center">
+<img src="./assets/demo.png" alt="Demo" />
+</p>
+
+</details>
+
 ## Usage
 
 The library provides an adapter that can be used like this:
@@ -20,7 +30,7 @@ public SecurityFilterChain configure(final HttpSecurity http) throws Exception
 }
 ```
 
-For a more detailed scenario is available in the [demo](./spring-security-advanced-authentication-ui-demo/).
+A more detailed scenario is available in the [demo](./spring-security-advanced-authentication-ui-demo/).
 
 ## Installation
 [Installation guide for the latest release](https://github.com/xdev-software/spring-security-advanced-authentication-ui/releases/latest#Installation)

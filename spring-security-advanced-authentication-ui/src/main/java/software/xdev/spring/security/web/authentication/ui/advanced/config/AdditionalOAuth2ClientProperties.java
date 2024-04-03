@@ -23,6 +23,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import software.xdev.spring.security.web.authentication.ui.advanced.AdditionalRegistrationData;
 
 
+/**
+ * Additional properties for OAuth2 client.
+ *
+ * @apiNote You may need to use {@link org.springframework.boot.context.properties.EnableConfigurationProperties}
+ * @see org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties
+ */
 @ConfigurationProperties(prefix = "spring.security.oauth2.client")
 public class AdditionalOAuth2ClientProperties
 {
