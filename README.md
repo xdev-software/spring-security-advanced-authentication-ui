@@ -35,6 +35,8 @@ A more detailed scenario is available in the [demo](./spring-security-advanced-a
 ## Installation
 [Installation guide for the latest release](https://github.com/xdev-software/spring-security-advanced-authentication-ui/releases/latest#Installation)
 
+> [!NOTE]  
+> To minimize the risk of dependency conflicts all Spring (Boot) dependencies are declared as provided and are not shipped by default.
 
 ## Support
 If you need support as soon as possible and you can't wait for any pull request, feel free to use [our support](https://xdev.software/en/services/support).
