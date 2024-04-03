@@ -4,7 +4,7 @@
 
 # spring-security-advanced-authentication-ui
 
-Modernizes the default Spring Web Authentication UI and makes it easier customizable.
+Modernizes the default Spring Web Authentication/Login UI and makes it easier customizable.
 
 <details><summary>Show demo</summary>
 
