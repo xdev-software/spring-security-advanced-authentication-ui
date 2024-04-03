@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -233,19 +232,29 @@ public class AdvancedLoginPageGeneratingFilter
 	protected String createBodyElement()
 	{
 		return "<body class='h-100"
-			+ this.additionalStylingData.classNames(AdditionalStylingData::body).orElse("")
+			+ Optional.ofNullable(this.additionalStylingData)
+			.map(AdditionalStylingData::body)
+			.map(StylingDefinition::classNameString)
+			.orElse("")
 			+ "'"
-			+ this.additionalStylingData.style(AdditionalStylingData::body).map(s -> " style='" + s + "'").orElse("")
+			+ Optional.ofNullable(this.additionalStylingData)
+			.map(AdditionalStylingData::body)
+			.map(sd -> " style='" + sd.styleString() + "'")
+			.orElse("")
 			+ ">";
 	}
 	
 	protected String createContainerElement()
 	{
 		return "<div class='container"
-			+ this.additionalStylingData.classNames(AdditionalStylingData::container).orElse("")
+			+ Optional.ofNullable(this.additionalStylingData)
+			.map(AdditionalStylingData::container)
+			.map(StylingDefinition::classNameString)
+			.orElse("")
 			+ "'"
-			+ this.additionalStylingData.style(AdditionalStylingData::container)
-			.map(s -> " style='" + s + "'")
+			+ Optional.ofNullable(this.additionalStylingData)
+			.map(AdditionalStylingData::container)
+			.map(sd -> " style='" + sd.styleString() + "'")
 			.orElse("")
 			+ ">";
 	}
@@ -253,9 +262,15 @@ public class AdvancedLoginPageGeneratingFilter
 	protected String createMainElement()
 	{
 		return "<main class='w-100 m-auto"
-			+ this.additionalStylingData.classNames(AdditionalStylingData::main).orElse("")
+			+ Optional.ofNullable(this.additionalStylingData)
+			.map(AdditionalStylingData::main)
+			.map(StylingDefinition::classNameString)
+			.orElse("")
 			+ "' style='max-width: 21em; padding: 1rem;"
-			+ this.additionalStylingData.style(AdditionalStylingData::main).orElse("")
+			+ Optional.ofNullable(this.additionalStylingData)
+			.map(AdditionalStylingData::container)
+			.map(StylingDefinition::styleString)
+			.orElse("")
 			+ "'>";
 	}
 	
@@ -437,18 +452,6 @@ public class AdvancedLoginPageGeneratingFilter
 			{
 				return new AdditionalStylingData(this.body, this.container, this.main);
 			}
-		}
-		
-		public Optional<String> classNames(final Function<AdditionalStylingData, StylingDefinition> accessor)
-		{
-			return Optional.ofNullable(accessor.apply(this))
-				.map(StylingDefinition::classNameString);
-		}
-		
-		public Optional<String> style(final Function<AdditionalStylingData, StylingDefinition> accessor)
-		{
-			return Optional.ofNullable(accessor.apply(this))
-				.map(StylingDefinition::styleString);
 		}
 	}
 }
