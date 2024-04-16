@@ -268,7 +268,7 @@ public class AdvancedLoginPageGeneratingFilter
 			.orElse("")
 			+ "' style='max-width: 21em; padding: 1rem;"
 			+ Optional.ofNullable(this.additionalStylingData)
-			.map(AdditionalStylingData::container)
+			.map(AdditionalStylingData::main)
 			.map(StylingDefinition::styleString)
 			.orElse("")
 			+ "'>";

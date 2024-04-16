@@ -1,3 +1,6 @@
+# 1.0.2
+* Fix incorrect styling of ``main`` element on login screen
+
 # 1.0.1
 * Fix NPE when ``additionalStylingData`` is not set
 
