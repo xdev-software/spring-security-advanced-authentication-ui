@@ -4,7 +4,7 @@ services:
   # Docs: https://docs.duendesoftware.com
   oidc-server-mock:
     container_name: oidc-server-mock
-    image: ghcr.io/soluto/oidc-server-mock:0.9.0
+    image: ghcr.io/soluto/oidc-server-mock:9.0.1
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       SERVER_OPTIONS_INLINE: |
