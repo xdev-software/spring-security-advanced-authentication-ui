@@ -210,7 +210,7 @@ jobs:
 
             echo "Checking if update-branch-merged exists"
             git fetch
-            if [[ $(git rev-parse origin/${{ env.UPDATE_BRANCH_MERGED }}) ]]; then
+            if [[ $(git ls-remote --exit-code --heads origin ${{ env.UPDATE_BRANCH_MERGED }}) ]]; then
               echo "Branch origin/${{ env.UPDATE_BRANCH_MERGED }} is missing"
               exit 0
             fi
@@ -271,8 +271,11 @@ jobs:
           base_branch=$(git branch --show-current)
           echo "Base branch is $base_branch"
 
-          echo "Fetching..."
-          git fetch
+          echo "Fully fetching..."
+          git fetch --unshallow || true
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch origin
+
           if [[ $(git rev-parse origin/${{ env.UPDATE_BRANCH_MERGED }}) ]]; then
             echo "Branch origin/${{ env.UPDATE_BRANCH_MERGED }} is missing"
             exit 0
