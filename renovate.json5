@@ -3,6 +3,14 @@
   "rebaseWhen": "behind-base-branch",
   "packageRules": [
     {
+      "description": "Ignore project internal dependencies",
+      "packagePattern": "^software.xdev:spring-security-advanced-authentication-ui",
+      "datasources": [
+        "maven"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Group Spring Boot",
       "matchPackagePatterns": [
         "^org.springframework.boot"
