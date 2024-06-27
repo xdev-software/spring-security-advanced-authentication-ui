@@ -37,11 +37,13 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.HtmlUtils;
 
+// CPD-OFF - Upstream copy
+
 
 /**
  * Same as {@link DefaultLoginPageGeneratingFilter} but all fields and methods can be overridden
  */
-@SuppressWarnings({"java:S2177", "java:S1192", "checkstyle:LineLength"})
+@SuppressWarnings({"java:S2177", "java:S1192", "checkstyle:LineLength", "PMD.GodClass"})
 public class ExtendableDefaultLoginPageGeneratingFilter
 	extends DefaultLoginPageGeneratingFilter
 	implements GeneratingFilterFillDataFrom<DefaultLoginPageGeneratingFilter>, ExtendableDefaultPageGeneratingFilter
@@ -215,6 +217,11 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		chain.doFilter(request, response);
 	}
 	
+	@SuppressWarnings({
+		"PMD.ConsecutiveLiteralAppends",
+		"PMD.ConsecutiveAppendsShouldReuse",
+		"PMD.InefficientStringBuffering",
+		"PMD.NcssCount"})
 	protected String generateLoginPageHtml(
 		final HttpServletRequest request,
 		final boolean loginError,
@@ -223,7 +230,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		// @formatter:off
 		final String errorMsg = loginError ? this.getLoginErrorMessage(request) : "Invalid credentials";
 		final String contextPath = request.getContextPath();
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder(2000);
 		sb.append("<!DOCTYPE html>\n");
 		sb.append("<html lang=\"en\">\n");
 		sb.append("  <head>\n");
@@ -321,9 +328,13 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		return exception.getMessage();
 	}
 	
+	@SuppressWarnings({
+		"PMD.ConsecutiveLiteralAppends",
+		"PMD.ConsecutiveAppendsShouldReuse",
+		"PMD.InefficientStringBuffering"})
 	protected String renderHiddenInputs(final HttpServletRequest request)
 	{
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder(50);
 		for(final Map.Entry<String, String> input : this.resolveHiddenInputs.apply(request).entrySet())
 		{
 			sb.append("<input name=\"");

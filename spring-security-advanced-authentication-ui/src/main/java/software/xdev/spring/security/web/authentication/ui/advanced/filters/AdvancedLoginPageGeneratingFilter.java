@@ -194,15 +194,7 @@ public class AdvancedLoginPageGeneratingFilter
 	
 	protected String generateHeader()
 	{
-		return "  <head>"
-			+ "    <meta charset='utf-8'>"
-			+ this.headerMetas.entrySet()
-			.stream()
-			.map(e -> "    <meta name='" + e.getKey() + "' content='" + e.getValue() + "'>")
-			.collect(Collectors.joining())
-			+ Optional.ofNullable(this.pageTitle).map(t -> "    <title>" + t + "</title>").orElse("")
-			+ this.headerElements.stream().map(s -> "    " + s).collect(Collectors.joining())
-			+ "  </head>";
+		return this.generateHeader(this.headerMetas, this.pageTitle, this.headerElements);
 	}
 	
 	protected String generateBody(

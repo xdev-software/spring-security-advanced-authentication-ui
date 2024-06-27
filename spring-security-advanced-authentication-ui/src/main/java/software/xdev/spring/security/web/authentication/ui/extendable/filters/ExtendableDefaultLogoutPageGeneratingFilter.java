@@ -32,7 +32,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-
+// CPD-OFF - Upstream copy
 /**
  * Same as {@link DefaultLogoutPageGeneratingFilter} but all fields and methods can be overridden
  */
@@ -78,10 +78,14 @@ public class ExtendableDefaultLogoutPageGeneratingFilter
 		}
 	}
 	
+	@SuppressWarnings({
+		"PMD.ConsecutiveLiteralAppends",
+		"PMD.ConsecutiveAppendsShouldReuse",
+		"PMD.InefficientStringBuffering"})
 	protected void renderLogout(final HttpServletRequest request, final HttpServletResponse response) throws IOException
 	{
 		// @formatter:off
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder(2000);
 		sb.append("<!DOCTYPE html>\n");
 		sb.append("<html lang=\"en\">\n");
 		sb.append("  <head>\n");
@@ -125,9 +129,13 @@ public class ExtendableDefaultLogoutPageGeneratingFilter
 		this.resolveHiddenInputs = resolveHiddenInputs;
 	}
 	
+	@SuppressWarnings({
+		"PMD.ConsecutiveLiteralAppends",
+		"PMD.ConsecutiveAppendsShouldReuse",
+		"PMD.InefficientStringBuffering"})
 	protected String renderHiddenInputs(final HttpServletRequest request)
 	{
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder(50);
 		for(final Map.Entry<String, String> input : this.resolveHiddenInputs.apply(request).entrySet())
 		{
 			sb.append("<input name=\"");
