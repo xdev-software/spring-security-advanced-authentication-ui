@@ -28,7 +28,7 @@
 
 		<mainClass>software.xdev.Application</mainClass>
 
-		<org.springframework.boot.version>3.3.0</org.springframework.boot.version>
+		<org.springframework.boot.version>3.3.1</org.springframework.boot.version>
 	</properties>
 
 	<dependencyManagement>
