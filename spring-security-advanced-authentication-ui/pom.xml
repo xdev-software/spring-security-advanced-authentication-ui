@@ -5,20 +5,20 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>software.xdev</groupId>
-	<artifactId>template-placeholder</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<artifactId>spring-security-advanced-authentication-ui</artifactId>
+	<version>1.0.3-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>template-placeholder</name>
-	<description>template-placeholder</description>
-	<url>https://github.com/xdev-software/template-placeholder</url>
+	<name>spring-security-advanced-authentication-ui</name>
+	<description>spring-security-advanced-authentication-ui</description>
+	<url>https://github.com/xdev-software/spring-security-advanced-authentication-ui</url>
 
 	<scm>
-		<url>https://github.com/xdev-software/template-placeholder</url>
-		<connection>scm:git:https://github.com/xdev-software/template-placeholder.git</connection>
+		<url>https://github.com/xdev-software/spring-security-advanced-authentication-ui</url>
+		<connection>scm:git:https://github.com/xdev-software/spring-security-advanced-authentication-ui.git</connection>
 	</scm>
 
-	<inceptionYear>2023</inceptionYear>
+	<inceptionYear>2024</inceptionYear>
 
 	<organization>
 		<name>XDEV Software</name>
@@ -83,6 +83,28 @@
 			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<version>3.3.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+			<version>3.3.1</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.10.3</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<pluginManagement>
@@ -171,6 +193,12 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.3.0</version>
 			</plugin>
 		</plugins>
 	</build>
