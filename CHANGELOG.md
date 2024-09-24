@@ -1,3 +1,7 @@
+# 1.0.3
+* Updated dependencies
+* Abstracted code
+
 # 1.0.2
 * Fix incorrect styling of ``main`` element on login screen
 

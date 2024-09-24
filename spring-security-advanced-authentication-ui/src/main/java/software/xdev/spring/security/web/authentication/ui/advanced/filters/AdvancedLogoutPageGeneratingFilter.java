@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -92,15 +90,7 @@ public class AdvancedLogoutPageGeneratingFilter
 	
 	protected String generateHeader()
 	{
-		return "  <head>"
-			+ "    <meta charset='utf-8'>"
-			+ this.headerMetas.entrySet()
-			.stream()
-			.map(e -> "    <meta name='" + e.getKey() + "' content='" + e.getValue() + "'>")
-			.collect(Collectors.joining())
-			+ Optional.ofNullable(this.pageTitle).map(t -> "    <title>" + t + "</title>").orElse("")
-			+ this.headerElements.stream().map(s -> "    " + s).collect(Collectors.joining())
-			+ "  </head>";
+		return this.generateHeader(this.headerMetas, this.pageTitle, this.headerElements);
 	}
 	
 	protected String generateBody(final HttpServletRequest request)

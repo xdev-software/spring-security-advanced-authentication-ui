@@ -17,6 +17,8 @@ package software.xdev.spring.security.web.authentication.ui.advanced.filters;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import software.xdev.spring.security.web.authentication.ui.extendable.filters.ExtendableDefaultPageGeneratingFilter;
 
@@ -43,4 +45,20 @@ public interface AdvancedSharedPageGeneratingFilter<S extends AdvancedSharedPage
 	S setHeaderMetas(Map<String, String> headerMetas);
 	
 	S addHeaderMeta(String name, String content);
+	
+	default String generateHeader(
+		Map<String, String> headerMetas,
+		String pageTitle,
+		List<String> headerElements)
+	{
+		return "  <head>"
+			+ "    <meta charset='utf-8'>"
+			+ headerMetas.entrySet()
+			.stream()
+			.map(e -> "    <meta name='" + e.getKey() + "' content='" + e.getValue() + "'>")
+			.collect(Collectors.joining())
+			+ Optional.ofNullable(pageTitle).map(t -> "    <title>" + t + "</title>").orElse("")
+			+ headerElements.stream().map(s -> "    " + s).collect(Collectors.joining())
+			+ "  </head>";
+	}
 }

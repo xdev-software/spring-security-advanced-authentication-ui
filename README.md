@@ -1,5 +1,5 @@
 [![Latest version](https://img.shields.io/maven-central/v/software.xdev/spring-security-advanced-authentication-ui?logo=apache%20maven)](https://mvnrepository.com/artifact/software.xdev/spring-security-advanced-authentication-ui)
-[![Build](https://img.shields.io/github/actions/workflow/status/xdev-software/spring-security-advanced-authentication-ui/checkBuild.yml?branch=develop)](https://github.com/xdev-software/spring-security-advanced-authentication-ui/actions/workflows/checkBuild.yml?query=branch%3Adevelop)
+[![Build](https://img.shields.io/github/actions/workflow/status/xdev-software/spring-security-advanced-authentication-ui/check-build.yml?branch=develop)](https://github.com/xdev-software/spring-security-advanced-authentication-ui/actions/workflows/check-build.yml?query=branch%3Adevelop)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=xdev-software_spring-security-advanced-authentication-ui&metric=alert_status)](https://sonarcloud.io/dashboard?id=xdev-software_spring-security-advanced-authentication-ui)
 
 # spring-security-advanced-authentication-ui
