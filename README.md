@@ -32,12 +32,12 @@ public SecurityFilterChain configure(final HttpSecurity http) throws Exception
 
 A more detailed scenario is available in the [demo](./spring-security-advanced-authentication-ui-demo/).
 
-> ![NOTE]
+> [!NOTE]
 > By default [Bootstrap](https://github.com/twbs/bootstrap) is loaded from ``cdn.jsdelivr.net``.<br/>
 > Due to privacy and stability reasons you should ship your own version!<br/>
 > An example how this can be done is shown in the demo.
 
-> ![NOTE]
+> [!NOTE]
 > The ``Advanced``-subsystem is still using the pre-Spring Security 6.4 / Spring Boot 3.4 templating system (no regex is used).<br/>
 > * In contrast to Spring's new Regex based system not all values are escaped by default
 >   * Usually they don't need to be escaped in the first place as they are set on the server side and can't be modified by a user
