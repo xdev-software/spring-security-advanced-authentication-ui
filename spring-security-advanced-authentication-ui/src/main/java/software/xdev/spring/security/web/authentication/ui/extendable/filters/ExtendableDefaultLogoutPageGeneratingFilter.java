@@ -81,7 +81,8 @@ public class ExtendableDefaultLogoutPageGeneratingFilter
 	@SuppressWarnings({
 		"PMD.ConsecutiveLiteralAppends",
 		"PMD.ConsecutiveAppendsShouldReuse",
-		"PMD.InefficientStringBuffering"})
+		"PMD.InefficientStringBuffering",
+		"checkstyle:MagicNumber"})
 	protected void renderLogout(final HttpServletRequest request, final HttpServletResponse response) throws IOException
 	{
 		final String renderedPage = HtmlTemplates.fromTemplate(LOGOUT_PAGE_TEMPLATE)
