@@ -38,7 +38,7 @@ A more detailed scenario is available in the [demo](./spring-security-advanced-a
 > An example how this can be done is shown in the demo.
 
 > [!NOTE]
-> The ``Advanced``-subsystem is still using the pre-Spring Security 6.4 / Spring Boot 3.4 templating system (no regex is used).<br/>
+> The ``Advanced``-subsystem uses the pre-``Spring Security 6.4`` / ``Spring Boot 3.4`` templating system (without Regex).<br/>
 > * In contrast to Spring's new Regex based system not all values are escaped by default
 >   * Usually they don't need to be escaped in the first place as they are set on the server side and can't be modified by a user
 > * This is A LOT FASTER (in tests around 50x) than Spring's new Regex based system
