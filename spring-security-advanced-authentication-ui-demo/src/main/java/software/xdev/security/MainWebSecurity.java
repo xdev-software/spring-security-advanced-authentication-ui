@@ -8,12 +8,15 @@ import java.time.Year;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -30,12 +33,14 @@ import software.xdev.spring.security.web.authentication.ui.advanced.config.Addit
 @EnableConfigurationProperties(AdditionalOAuth2ClientProperties.class)
 public class MainWebSecurity
 {
-	@Bean(name = "mainSecurityFilterChainBean")
-	public SecurityFilterChain configure(
+	private static final Logger LOG = LoggerFactory.getLogger(MainWebSecurity.class);
+	
+	protected void customizeLogin(
 		final HttpSecurity http,
 		final AdditionalOAuth2ClientProperties additionalOAuth2ClientProperties) throws Exception
 	{
-		http.with(new AdvancedLoginPageAdapter<>(http), c -> c
+		http.with(
+			new AdvancedLoginPageAdapter<>(http), c -> c
 				.customizePages(p -> p
 					// No remote communication -> Use local resources
 					.setHeaderElements(List.of(
@@ -62,15 +67,30 @@ public class MainWebSecurity
 						+ " href='https://xdev.software' target='_blank'>"
 						+ "    XDEV Software"
 						+ "  </a>"
-						+ "</p>")))
+						+ "</p>")));
+	}
+	
+	@Bean(name = "mainSecurityFilterChainBean")
+	public SecurityFilterChain configure(
+		final HttpSecurity http,
+		final AdditionalOAuth2ClientProperties additionalOAuth2ClientProperties) throws Exception
+	{
+		this.customizeLogin(http, additionalOAuth2ClientProperties);
+		
+		http
 			.headers(h -> h
 				.referrerPolicy(r -> r.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
 				.contentSecurityPolicy(csp -> csp.policyDirectives(this.getCSP())))
 			.formLogin(Customizer.withDefaults())
 			.oneTimeTokenLogin(c -> c.tokenGenerationSuccessHandler(
-				(request, response, oneTimeToken) -> {
-					// Do nothing - Dummy
-				}))
+				(request, response, oneTimeToken) ->
+					LOG.info(
+						"OneTimeToken should be sent for {} with value {}",
+						oneTimeToken.getUsername(),
+						oneTimeToken.getTokenValue())))
+			.webAuthn(c -> c.rpName("Spring Security Localhost Relying Party")
+				.rpId("localhost")
+				.allowedOrigins("http://localhost:8080"))
 			.oauth2Login(c -> c.defaultSuccessUrl("/"))
 			.authorizeHttpRequests(urlRegistry -> urlRegistry.anyRequest().authenticated())
 			.requestCache(c -> c.requestCache(new NullRequestCache()));
@@ -78,11 +98,15 @@ public class MainWebSecurity
 		return http.build();
 	}
 	
-	// Required for OTT
 	@Bean
+	@SuppressWarnings({"java:S6437", "deprecation"})
 	public UserDetailsService userDetailsService()
 	{
-		return new InMemoryUserDetailsManager();
+		return new InMemoryUserDetailsManager(User.withDefaultPasswordEncoder()
+			.username("test")
+			.password("test")
+			.roles("USER")
+			.build());
 	}
 	
 	// Example CSP

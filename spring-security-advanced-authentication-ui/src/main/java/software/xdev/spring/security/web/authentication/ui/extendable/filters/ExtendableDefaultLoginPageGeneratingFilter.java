@@ -97,7 +97,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 			new CopyInfo<>("passkeysEnabled", this::setPasskeysEnabled),
 			new CopyInfo<>("oneTimeTokenEnabled", this::setOneTimeTokenEnabled),
 			new CopyInfo<>("authenticationUrl", this::setAuthenticationUrl),
-			new CopyInfo<>("generateOneTimeTokenUrl", this::setGenerateOneTimeTokenUrl),
+			new CopyInfo<>("generateOneTimeTokenUrl", this::setOneTimeTokenGenerationUrl),
 			new CopyInfo<>("usernameParameter", this::setUsernameParameter),
 			new CopyInfo<>("passwordParameter", this::setPasswordParameter),
 			new CopyInfo<>("rememberMeParameter", this::setRememberMeParameter),
@@ -205,7 +205,8 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		this.authenticationUrl = authenticationUrl;
 	}
 	
-	public void setGenerateOneTimeTokenUrl(final String generateOneTimeTokenUrl)
+	@Override
+	public void setOneTimeTokenGenerationUrl(final String generateOneTimeTokenUrl)
 	{
 		this.generateOneTimeTokenUrl = generateOneTimeTokenUrl;
 	}
@@ -524,7 +525,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		return HtmlTemplates.fromTemplate(ALERT_TEMPLATE).withValue("message", message).render();
 	}
 	
-	// Bade naming of original method -> Created overload
+	// Improvement: Inconvenient naming of original method -> Created overload
 	protected String renderLogoutSuccess(final boolean isLogoutSuccess)
 	{
 		return this.renderSuccess(isLogoutSuccess);
@@ -550,11 +551,12 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		  </script>
 		""";
 	
+	// Improved: Fix </form> being used for </div>
 	protected static final String PASSKEY_FORM_TEMPLATE = """
 		<div class="login-form">
 		<h2>Login with Passkeys</h2>
 		<button id="passkey-signin" type="submit" class="primary">Sign in with a passkey</button>
-		</form>
+		</div>
 		""";
 	
 	protected static final String LOGIN_PAGE_TEMPLATE = """

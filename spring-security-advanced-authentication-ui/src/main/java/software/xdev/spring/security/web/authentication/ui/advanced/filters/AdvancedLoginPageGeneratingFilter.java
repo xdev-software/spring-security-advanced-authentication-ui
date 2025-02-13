@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -33,6 +34,7 @@ import software.xdev.spring.security.web.authentication.ui.advanced.StylingDefin
 import software.xdev.spring.security.web.authentication.ui.extendable.filters.ExtendableDefaultLoginPageGeneratingFilter;
 
 
+@SuppressWarnings("unused") // This is an API ;)
 public class AdvancedLoginPageGeneratingFilter
 	extends ExtendableDefaultLoginPageGeneratingFilter
 	implements AdvancedSharedPageGeneratingFilter<AdvancedLoginPageGeneratingFilter>
@@ -51,6 +53,8 @@ public class AdvancedLoginPageGeneratingFilter
 	
 	protected String header = "";
 	
+	protected String passKeysWebAuthnScriptLocation = "/login/webauthn.js";
+	
 	protected String formLoginUsernameText = "Username";
 	
 	protected String formLoginPasswordText = "Password";
@@ -66,6 +70,10 @@ public class AdvancedLoginPageGeneratingFilter
 	protected String oneTimeTokenUsernameText = "Username";
 	
 	protected String oneTimeTokenSendTokenText = "Send token";
+	
+	protected String passkeyLoginHeaderText = "Login with Passkeys";
+	
+	protected String passkeySignInSubmitText = "Sign in with a passkey";
 	
 	protected String ssoLoginHeaderText = "Login with";
 	
@@ -188,6 +196,18 @@ public class AdvancedLoginPageGeneratingFilter
 		return this;
 	}
 	
+	public AdvancedLoginPageGeneratingFilter passkeyLoginHeaderText(final String passkeyLoginHeaderText)
+	{
+		this.passkeyLoginHeaderText = passkeyLoginHeaderText;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter passkeySignInSubmitText(final String passkeySignInSubmitText)
+	{
+		this.passkeySignInSubmitText = passkeySignInSubmitText;
+		return this;
+	}
+	
 	public AdvancedLoginPageGeneratingFilter ssoLoginHeaderText(final String ssoLoginHeaderText)
 	{
 		this.ssoLoginHeaderText = ssoLoginHeaderText;
@@ -217,25 +237,94 @@ public class AdvancedLoginPageGeneratingFilter
 		final boolean loginError,
 		final boolean logoutSuccess)
 	{
+		final String contextPath = request.getContextPath();
+		
 		return "<!DOCTYPE html>"
 			+ "<html lang='en' style='height:100%'>"
-			+ this.generateHeader()
-			+ this.generateBody(request, loginError, logoutSuccess)
+			+ this.generateHeader(request, contextPath)
+			+ this.generateBody(request, contextPath, loginError, logoutSuccess)
 			+ "</html>";
 	}
 	
-	protected String generateHeader()
+	// region Header
+	
+	protected String generateHeader(
+		final HttpServletRequest request,
+		final String contextPath)
 	{
-		return this.generateHeader(this.headerMetas, this.pageTitle, this.headerElements);
+		return this.generateHeader(
+			this.headerMetas,
+			this.pageTitle,
+			this.requiresAdditionalHeaderElements()
+				? Stream.concat(
+					this.headerElements.stream(),
+					this.additionalHeaderElements(request, contextPath).stream())
+				.toList()
+				: this.headerElements);
 	}
+	
+	protected boolean requiresAdditionalHeaderElements()
+	{
+		return this.passkeysEnabled;
+	}
+	
+	protected List<String> additionalHeaderElements(
+		final HttpServletRequest request,
+		final String contextPath)
+	{
+		final List<String> additionalHeaderElements = new ArrayList<>();
+		
+		if(this.passkeysEnabled)
+		{
+			additionalHeaderElements.addAll(this.createPassKeyHeaderElements(request, contextPath));
+		}
+		
+		return additionalHeaderElements;
+	}
+	
+	protected List<String> createPassKeyHeaderElements(
+		final HttpServletRequest request,
+		final String contextPath)
+	{
+		return List.of(
+			"<script type=\"text/javascript\" src=\"" + contextPath + this.passKeysWebAuthnScriptLocation
+				+ "\"></script>",
+			this.createPassKeyScript(request, contextPath)
+		);
+	}
+	
+	protected String createPassKeyScript(
+		final HttpServletRequest request,
+		final String contextPath)
+	{
+		return """
+			<script type="text/javascript">
+			document.addEventListener("DOMContentLoaded",\
+			() => setupLogin(%s, "%s", document.getElementById('passkey-signin')));
+			</script>
+			""".formatted(this.renderHeadersForFetchAPI(request), contextPath);
+	}
+	
+	protected String renderHeadersForFetchAPI(final HttpServletRequest request)
+	{
+		return "{ "
+			+ this.resolveHeaders.apply(request).entrySet()
+			.stream()
+			.map(e -> "\"" + e.getKey() + "\": \"" + e.getValue() + "\"")
+			.collect(Collectors.joining(", "))
+			+ " }";
+	}
+	
+	// endregion
+	// region Body
 	
 	protected String generateBody(
 		final HttpServletRequest request,
+		final String contextPath,
 		final boolean loginError,
 		final boolean logoutSuccess)
 	{
 		final String errorMsg = loginError ? this.getLoginErrorMessage(request) : "Invalid credentials";
-		final String contextPath = request.getContextPath();
 		
 		return "  " + this.createBodyElement()
 			+ "     " + this.createContainerElement()
@@ -245,6 +334,7 @@ public class AdvancedLoginPageGeneratingFilter
 			+ this.header
 			+ this.createFormLogin(request, contextPath)
 			+ this.createOneTimeTokenLogin(request, contextPath)
+			+ this.createPasskeyFormLogin()
 			+ (this.hasSSOLogin() ? this.createHeaderLoginWith() : "")
 			+ this.createOAuth2LoginPagePart(contextPath)
 			+ this.createSaml2LoginPagePart(contextPath)
@@ -347,9 +437,7 @@ public class AdvancedLoginPageGeneratingFilter
 	
 	protected String createFormLoginSignInButton()
 	{
-		return "<button class=\"btn btn-block btn-primary w-100 mt-1\" type=\"submit\">"
-			+ this.formLoginSignInText
-			+ "</button>";
+		return this.createFormSubmitButton(this.formLoginSignInText);
 	}
 	
 	// endregion
@@ -377,15 +465,40 @@ public class AdvancedLoginPageGeneratingFilter
 	
 	protected String createOneTimeTokenLoginHeader()
 	{
-		return "<h5 class=\"h5 mb-2 fw-normal\">"
-			+ this.oneTimeTokenHeaderText
-			+ "</h5>";
+		return this.createLoginMethodHeader(this.oneTimeTokenHeaderText);
 	}
 	
 	protected String createOneTimeTokenLoginSignInButton()
 	{
-		return "<button class=\"btn btn-block btn-primary w-100 mt-1\" type=\"submit\">"
-			+ this.oneTimeTokenSendTokenText
+		return this.createFormSubmitButton(this.oneTimeTokenSendTokenText);
+	}
+	
+	// endregion
+	// region Render Passkeys
+	
+	protected String createPasskeyFormLogin()
+	{
+		if(!this.passkeysEnabled)
+		{
+			return "";
+		}
+		
+		return this.createPasskeyFormLoginHeader()
+			// This needs to be a div and not a form
+			+ "<div id=\"passkey-form\" class=\"mb-3 login-form\">"
+			+ this.createPasskeyForSignInButton()
+			+ "</div>";
+	}
+	
+	protected String createPasskeyFormLoginHeader()
+	{
+		return this.createLoginMethodHeader(this.passkeyLoginHeaderText);
+	}
+	
+	protected String createPasskeyForSignInButton()
+	{
+		return "<button id=\"passkey-signin\" class=\"btn btn-block btn-primary w-100 mt-1\" type=\"submit\">"
+			+ this.passkeySignInSubmitText
 			+ "</button>";
 	}
 	
@@ -399,9 +512,7 @@ public class AdvancedLoginPageGeneratingFilter
 	
 	protected String createHeaderLoginWith()
 	{
-		return "<h5 class=\"h5 mb-2 fw-normal\">"
-			+ this.ssoLoginHeaderText
-			+ "</h5>";
+		return this.createLoginMethodHeader(this.ssoLoginHeaderText);
 	}
 	
 	protected String createOAuth2LoginPagePart(final String contextPath)
@@ -465,10 +576,24 @@ public class AdvancedLoginPageGeneratingFilter
 	
 	// endregion
 	
+	protected String createLoginMethodHeader(final String text)
+	{
+		return "<h5 class=\"h5 mb-2 fw-normal\">" + text + "</h5>";
+	}
+	
+	public String createFormSubmitButton(final String text)
+	{
+		return "<button class=\"btn btn-block btn-primary w-100 mt-1\" type=\"submit\">"
+			+ text
+			+ "</button>";
+	}
+	
 	protected String renderHiddenInputs(final HttpServletRequest request)
 	{
 		return this.renderHiddenInputs(this.resolveHiddenInputs.apply(request).entrySet());
 	}
+	
+	// endregion
 	
 	protected record ButtonBuildingData(
 		String url,
