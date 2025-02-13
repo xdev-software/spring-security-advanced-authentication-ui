@@ -106,4 +106,10 @@ public class AdvancedLogoutPageGeneratingFilter
 			+ "    </div>"
 			+ "  </body>";
 	}
+	
+	@Override
+	protected String renderHiddenInputs(final HttpServletRequest request)
+	{
+		return this.renderHiddenInputs(this.resolveHiddenInputs.apply(request).entrySet());
+	}
 }

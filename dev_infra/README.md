@@ -1,7 +1,7 @@
 ## Development Infrastructure
 
 The infrastructure contains the following:
-* [Open ID Connect Mock Server](https://github.com/Soluto/oidc-server-mock) - for login in
+* [Open ID Connect Mock Server](https://github.com/xdev-software/oidc-server-mock) - for login in
   * Available at http://localhost:4011
 
 ### Setup
