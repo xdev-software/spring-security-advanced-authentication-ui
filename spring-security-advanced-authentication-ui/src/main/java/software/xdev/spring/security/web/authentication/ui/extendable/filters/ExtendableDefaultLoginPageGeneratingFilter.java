@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -35,7 +36,6 @@ import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import org.springframework.web.util.HtmlUtils;
 
 // CPD-OFF - Upstream copy
 
@@ -43,7 +43,7 @@ import org.springframework.web.util.HtmlUtils;
 /**
  * Same as {@link DefaultLoginPageGeneratingFilter} but all fields and methods can be overridden
  */
-@SuppressWarnings({"java:S2177", "java:S1192", "checkstyle:LineLength", "PMD.GodClass"})
+@SuppressWarnings({"java:S2177", "java:S1192", "java:S5663", "checkstyle:LineLength", "PMD.GodClass"})
 public class ExtendableDefaultLoginPageGeneratingFilter
 	extends DefaultLoginPageGeneratingFilter
 	implements GeneratingFilterFillDataFrom<DefaultLoginPageGeneratingFilter>, ExtendableDefaultPageGeneratingFilter
@@ -60,7 +60,13 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	
 	protected boolean saml2LoginEnabled;
 	
+	protected boolean passkeysEnabled;
+	
+	protected boolean oneTimeTokenEnabled;
+	
 	protected String authenticationUrl;
+	
+	protected String generateOneTimeTokenUrl;
 	
 	protected String usernameParameter;
 	
@@ -75,6 +81,9 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	protected Function<HttpServletRequest, Map<String, String>> resolveHiddenInputs =
 		request -> Collections.emptyMap();
 	
+	protected Function<HttpServletRequest, Map<String, String>> resolveHeaders =
+		request -> Collections.emptyMap();
+	
 	@Override
 	public void fillDataFrom(final DefaultLoginPageGeneratingFilter source)
 	{
@@ -85,13 +94,17 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 			new CopyInfo<>("formLoginEnabled", this::setFormLoginEnabled),
 			new CopyInfo<>("oauth2LoginEnabled", this::setOauth2LoginEnabled),
 			new CopyInfo<>("saml2LoginEnabled", this::setSaml2LoginEnabled),
+			new CopyInfo<>("passkeysEnabled", this::setPasskeysEnabled),
+			new CopyInfo<>("oneTimeTokenEnabled", this::setOneTimeTokenEnabled),
 			new CopyInfo<>("authenticationUrl", this::setAuthenticationUrl),
+			new CopyInfo<>("generateOneTimeTokenUrl", this::setGenerateOneTimeTokenUrl),
 			new CopyInfo<>("usernameParameter", this::setUsernameParameter),
 			new CopyInfo<>("passwordParameter", this::setPasswordParameter),
 			new CopyInfo<>("rememberMeParameter", this::setRememberMeParameter),
 			new CopyInfo<>("oauth2AuthenticationUrlToClientName", this::setOauth2AuthenticationUrlToClientName),
 			new CopyInfo<>("saml2AuthenticationUrlToProviderName", this::setSaml2AuthenticationUrlToProviderName),
-			new CopyInfo<>("resolveHiddenInputs", this::setResolveHiddenInputs)
+			new CopyInfo<>("resolveHiddenInputs", this::setResolveHiddenInputs),
+			new CopyInfo<>("resolveHeaders", this::setResolveHeaders)
 		));
 	}
 	
@@ -106,6 +119,19 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	{
 		Assert.notNull(resolveHiddenInputs, "resolveHiddenInputs cannot be null");
 		this.resolveHiddenInputs = resolveHiddenInputs;
+	}
+	
+	/**
+	 * Sets a Function used to resolve a Map of the HTTP headers where the key is the name of the header and the value
+	 * is the value of the header. Typically, this is used to resolve the CSRF token.
+	 *
+	 * @param resolveHeaders the function to resolve the headers
+	 */
+	@Override
+	public void setResolveHeaders(final Function<HttpServletRequest, Map<String, String>> resolveHeaders)
+	{
+		Assert.notNull(resolveHeaders, "resolveHeaders cannot be null");
+		this.resolveHeaders = resolveHeaders;
 	}
 	
 	@Override
@@ -151,15 +177,32 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	}
 	
 	@Override
+	public void setOneTimeTokenEnabled(final boolean oneTimeTokenEnabled)
+	{
+		this.oneTimeTokenEnabled = oneTimeTokenEnabled;
+	}
+	
+	@Override
 	public void setSaml2LoginEnabled(final boolean saml2LoginEnabled)
 	{
 		this.saml2LoginEnabled = saml2LoginEnabled;
 	}
 	
 	@Override
+	public void setPasskeysEnabled(final boolean passkeysEnabled)
+	{
+		this.passkeysEnabled = passkeysEnabled;
+	}
+	
+	@Override
 	public void setAuthenticationUrl(final String authenticationUrl)
 	{
 		this.authenticationUrl = authenticationUrl;
+	}
+	
+	public void setGenerateOneTimeTokenUrl(final String generateOneTimeTokenUrl)
+	{
+		this.generateOneTimeTokenUrl = generateOneTimeTokenUrl;
 	}
 	
 	@Override
@@ -217,144 +260,6 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		chain.doFilter(request, response);
 	}
 	
-	@SuppressWarnings({
-		"PMD.ConsecutiveLiteralAppends",
-		"PMD.ConsecutiveAppendsShouldReuse",
-		"PMD.InefficientStringBuffering",
-		"PMD.NcssCount"})
-	protected String generateLoginPageHtml(
-		final HttpServletRequest request,
-		final boolean loginError,
-		final boolean logoutSuccess)
-	{
-		// @formatter:off
-		final String errorMsg = loginError ? this.getLoginErrorMessage(request) : "Invalid credentials";
-		final String contextPath = request.getContextPath();
-		final StringBuilder sb = new StringBuilder(2000);
-		sb.append("<!DOCTYPE html>\n");
-		sb.append("<html lang=\"en\">\n");
-		sb.append("  <head>\n");
-		sb.append("    <meta charset=\"utf-8\">\n");
-		sb.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n");
-		sb.append("    <meta name=\"description\" content=\"\">\n");
-		sb.append("    <meta name=\"author\" content=\"\">\n");
-		sb.append("    <title>Please sign in</title>\n");
-		sb.append("    <link href=\"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css\" "
-			+ "rel=\"stylesheet\" integrity=\"sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M\" crossorigin=\"anonymous\">\n");
-		sb.append("    <link href=\"https://getbootstrap.com/docs/4.0/examples/signin/signin.css\" "
-			+ "rel=\"stylesheet\" integrity=\"sha384-oOE/3m0LUMPub4kaC09mrdEhIc+e3exm4xOGxAmuFXhBNF4hcg/6MiAXAf5p0P56\" crossorigin=\"anonymous\"/>\n");
-		sb.append("  </head>\n");
-		sb.append("  <body>\n");
-		sb.append("     <div class=\"container\">\n");
-		if (this.formLoginEnabled)
-		{
-			sb.append("      <form class=\"form-signin\" method=\"post\" action=\"" + contextPath
-				+ this.authenticationUrl + "\">\n");
-			sb.append("        <h2 class=\"form-signin-heading\">Please sign in</h2>\n");
-			sb.append(this.createError(loginError, errorMsg) + this.createLogoutSuccess(logoutSuccess) + "        <p>\n");
-			sb.append("          <label for=\"username\" class=\"sr-only\">Username</label>\n");
-			sb.append("          <input type=\"text\" id=\"username\" name=\"" + this.usernameParameter
-				+ "\" class=\"form-control\" placeholder=\"Username\" required autofocus>\n");
-			sb.append("        </p>\n");
-			sb.append("        <p>\n");
-			sb.append("          <label for=\"password\" class=\"sr-only\">Password</label>\n");
-			sb.append("          <input type=\"password\" id=\"password\" name=\"" + this.passwordParameter
-				+ "\" class=\"form-control\" placeholder=\"Password\" required>\n");
-			sb.append("        </p>\n");
-			sb.append(this.createRememberMe(this.rememberMeParameter) + this.renderHiddenInputs(request));
-			sb.append("        <button class=\"btn btn-lg btn-primary btn-block\" type=\"submit\">Sign in</button>\n");
-			sb.append("      </form>\n");
-		}
-		if (this.oauth2LoginEnabled)
-		{
-			sb.append("<h2 class=\"form-signin-heading\">Login with OAuth 2.0</h2>");
-			sb.append(this.createError(loginError, errorMsg));
-			sb.append(this.createLogoutSuccess(logoutSuccess));
-			sb.append("<table class=\"table table-striped\">\n");
-			for (final Map.Entry<String, String> clientAuthenticationUrlToClientName : this.oauth2AuthenticationUrlToClientName
-				.entrySet())
-			{
-				sb.append(" <tr><td>");
-				final String url = clientAuthenticationUrlToClientName.getKey();
-				sb.append("<a href=\"").append(contextPath).append(url).append("\">");
-				final String clientName = HtmlUtils.htmlEscape(clientAuthenticationUrlToClientName.getValue());
-				sb.append(clientName);
-				sb.append("</a>");
-				sb.append("</td></tr>\n");
-			}
-			sb.append("</table>\n");
-		}
-		if (this.saml2LoginEnabled)
-		{
-			sb.append("<h2 class=\"form-signin-heading\">Login with SAML 2.0</h2>");
-			sb.append(this.createError(loginError, errorMsg));
-			sb.append(this.createLogoutSuccess(logoutSuccess));
-			sb.append("<table class=\"table table-striped\">\n");
-			for (final Map.Entry<String, String> relyingPartyUrlToName : this.saml2AuthenticationUrlToProviderName
-				.entrySet())
-			{
-				sb.append(" <tr><td>");
-				final String url = relyingPartyUrlToName.getKey();
-				sb.append("<a href=\"").append(contextPath).append(url).append("\">");
-				final String partyName = HtmlUtils.htmlEscape(relyingPartyUrlToName.getValue());
-				sb.append(partyName);
-				sb.append("</a>");
-				sb.append("</td></tr>\n");
-			}
-			sb.append("</table>\n");
-		}
-		sb.append("</div>\n");
-		sb.append("</body></html>");
-		return sb.toString();
-		// @formatter:on
-	}
-	
-	protected String getLoginErrorMessage(final HttpServletRequest request)
-	{
-		final HttpSession session = request.getSession(false);
-		if(session == null)
-		{
-			return "Invalid credentials";
-		}
-		if(!(session
-			.getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION) instanceof final AuthenticationException exception))
-		{
-			return "Invalid credentials";
-		}
-		if(!StringUtils.hasText(exception.getMessage()))
-		{
-			return "Invalid credentials";
-		}
-		return exception.getMessage();
-	}
-	
-	@SuppressWarnings({
-		"PMD.ConsecutiveLiteralAppends",
-		"PMD.ConsecutiveAppendsShouldReuse",
-		"PMD.InefficientStringBuffering"})
-	protected String renderHiddenInputs(final HttpServletRequest request)
-	{
-		final StringBuilder sb = new StringBuilder(50);
-		for(final Map.Entry<String, String> input : this.resolveHiddenInputs.apply(request).entrySet())
-		{
-			sb.append("<input name=\"");
-			sb.append(input.getKey());
-			sb.append("\" type=\"hidden\" value=\"");
-			sb.append(input.getValue());
-			sb.append("\" />\n");
-		}
-		return sb.toString();
-	}
-	
-	protected String createRememberMe(final String paramName)
-	{
-		if(paramName == null)
-		{
-			return "";
-		}
-		return "<p><input type='checkbox' name='" + paramName + "'/> Remember me on this computer.</p>\n";
-	}
-	
 	protected boolean isLogoutSuccess(final HttpServletRequest request)
 	{
 		return this.logoutSuccessUrl != null && this.matches(request, this.logoutSuccessUrl);
@@ -370,24 +275,6 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		return this.matches(request, this.failureUrl);
 	}
 	
-	protected String createError(final boolean isError, final String message)
-	{
-		if(!isError)
-		{
-			return "";
-		}
-		return "<div class=\"alert alert-danger\" role=\"alert\">" + HtmlUtils.htmlEscape(message) + "</div>";
-	}
-	
-	protected String createLogoutSuccess(final boolean isLogoutSuccess)
-	{
-		if(!isLogoutSuccess)
-		{
-			return "";
-		}
-		return "<div class=\"alert alert-success\" role=\"alert\">You have been signed out</div>";
-	}
-	
 	protected boolean matches(final HttpServletRequest request, final String url)
 	{
 		if(!"GET".equals(request.getMethod()) || url == null)
@@ -398,7 +285,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		final int pathParamIndex = uri.indexOf(';');
 		if(pathParamIndex > 0)
 		{
-			// strip everything after the first semi-colon
+			// strip everything after the first semicolon
 			uri = uri.substring(0, pathParamIndex);
 		}
 		if(request.getQueryString() != null)
@@ -411,4 +298,331 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		}
 		return uri.equals(request.getContextPath() + url);
 	}
+	
+	protected String generateLoginPageHtml(
+		final HttpServletRequest request,
+		final boolean loginError,
+		final boolean logoutSuccess)
+	{
+		final String errorMsg = loginError ? this.getLoginErrorMessage(request) : "Invalid credentials";
+		final String contextPath = request.getContextPath();
+		
+		return HtmlTemplates.fromTemplate(LOGIN_PAGE_TEMPLATE)
+			.withRawHtml("contextPath", contextPath)
+			.withRawHtml("javaScript", this.renderJavaScript(request, contextPath))
+			.withRawHtml("formLogin", this.renderFormLogin(request, loginError, logoutSuccess, contextPath, errorMsg))
+			.withRawHtml(
+				"oneTimeTokenLogin",
+				this.renderOneTimeTokenLogin(request, loginError, logoutSuccess, contextPath, errorMsg))
+			.withRawHtml("oauth2Login", this.renderOAuth2Login(loginError, logoutSuccess, errorMsg, contextPath))
+			.withRawHtml("saml2Login", this.renderSaml2Login(loginError, logoutSuccess, errorMsg, contextPath))
+			.withRawHtml("passkeyLogin", this.renderPasskeyLogin())
+			.render();
+	}
+	
+	protected String renderJavaScript(final HttpServletRequest request, final String contextPath)
+	{
+		if(this.passkeysEnabled)
+		{
+			return HtmlTemplates.fromTemplate(PASSKEY_SCRIPT_TEMPLATE)
+				.withValue("loginPageUrl", this.loginPageUrl)
+				.withValue("contextPath", contextPath)
+				.withRawHtml("csrfHeaders", this.renderHeaders(request))
+				.render();
+		}
+		return "";
+	}
+	
+	protected String renderPasskeyLogin()
+	{
+		if(this.passkeysEnabled)
+		{
+			return PASSKEY_FORM_TEMPLATE;
+		}
+		return "";
+	}
+	
+	protected String renderHeaders(final HttpServletRequest request)
+	{
+		final StringBuilder javascriptHeadersEntries = new StringBuilder();
+		final Map<String, String> headers = this.resolveHeaders.apply(request);
+		for(final Map.Entry<String, String> header : headers.entrySet())
+		{
+			javascriptHeadersEntries.append(HtmlTemplates.fromTemplate(CSRF_HEADERS)
+				.withValue("headerName", header.getKey())
+				.withValue("headerValue", header.getValue())
+				.render());
+		}
+		return javascriptHeadersEntries.toString();
+	}
+	
+	protected String renderFormLogin(
+		final HttpServletRequest request, final boolean loginError, final boolean logoutSuccess,
+		final String contextPath, final String errorMsg)
+	{
+		if(!this.formLoginEnabled)
+		{
+			return "";
+		}
+		
+		final String hiddenInputs = this.resolveHiddenInputs.apply(request)
+			.entrySet()
+			.stream()
+			.map(inputKeyValue -> this.renderHiddenInput(inputKeyValue.getKey(), inputKeyValue.getValue()))
+			.collect(Collectors.joining("\n"));
+		
+		return HtmlTemplates.fromTemplate(LOGIN_FORM_TEMPLATE)
+			.withValue("loginUrl", contextPath + this.authenticationUrl)
+			.withRawHtml("errorMessage", this.renderError(loginError, errorMsg))
+			.withRawHtml("logoutMessage", this.renderSuccess(logoutSuccess))
+			.withValue("usernameParameter", this.usernameParameter)
+			.withValue("passwordParameter", this.passwordParameter)
+			.withRawHtml("rememberMeInput", this.renderRememberMe(this.rememberMeParameter))
+			.withRawHtml("hiddenInputs", hiddenInputs)
+			.withRawHtml("autocomplete", this.passkeysEnabled ? "autocomplete=\"password webauthn\" " : "")
+			.render();
+	}
+	
+	protected String renderOneTimeTokenLogin(
+		final HttpServletRequest request, final boolean loginError, final boolean logoutSuccess,
+		final String contextPath, final String errorMsg)
+	{
+		if(!this.oneTimeTokenEnabled)
+		{
+			return "";
+		}
+		
+		final String hiddenInputs = this.resolveHiddenInputs.apply(request)
+			.entrySet()
+			.stream()
+			.map(inputKeyValue -> this.renderHiddenInput(inputKeyValue.getKey(), inputKeyValue.getValue()))
+			.collect(Collectors.joining("\n"));
+		
+		return HtmlTemplates.fromTemplate(ONE_TIME_TEMPLATE)
+			.withValue("generateOneTimeTokenUrl", contextPath + this.generateOneTimeTokenUrl)
+			.withRawHtml("errorMessage", this.renderError(loginError, errorMsg))
+			.withRawHtml("logoutMessage", this.renderSuccess(logoutSuccess))
+			.withRawHtml("hiddenInputs", hiddenInputs)
+			.render();
+	}
+	
+	protected String renderOAuth2Login(
+		final boolean loginError,
+		final boolean logoutSuccess,
+		final String errorMsg,
+		final String contextPath)
+	{
+		if(!this.oauth2LoginEnabled)
+		{
+			return "";
+		}
+		
+		final String oauth2Rows = this.oauth2AuthenticationUrlToClientName.entrySet()
+			.stream()
+			.map(urlToName -> renderOAuth2Row(contextPath, urlToName.getKey(), urlToName.getValue()))
+			.collect(Collectors.joining("\n"));
+		
+		return HtmlTemplates.fromTemplate(OAUTH2_LOGIN_TEMPLATE)
+			.withRawHtml("errorMessage", this.renderError(loginError, errorMsg))
+			.withRawHtml("logoutMessage", this.renderSuccess(logoutSuccess))
+			.withRawHtml("oauth2Rows", oauth2Rows)
+			.render();
+	}
+	
+	protected static String renderOAuth2Row(final String contextPath, final String url, final String clientName)
+	{
+		return HtmlTemplates.fromTemplate(OAUTH2_ROW_TEMPLATE)
+			.withValue("url", contextPath + url)
+			.withValue("clientName", clientName)
+			.render();
+	}
+	
+	protected String renderSaml2Login(
+		final boolean loginError,
+		final boolean logoutSuccess,
+		final String errorMsg,
+		final String contextPath)
+	{
+		if(!this.saml2LoginEnabled)
+		{
+			return "";
+		}
+		
+		final String samlRows = this.saml2AuthenticationUrlToProviderName.entrySet()
+			.stream()
+			.map(urlToName -> renderSaml2Row(contextPath, urlToName.getKey(), urlToName.getValue()))
+			.collect(Collectors.joining("\n"));
+		
+		return HtmlTemplates.fromTemplate(SAML_LOGIN_TEMPLATE)
+			.withRawHtml("errorMessage", this.renderError(loginError, errorMsg))
+			.withRawHtml("logoutMessage", this.renderSuccess(logoutSuccess))
+			.withRawHtml("samlRows", samlRows)
+			.render();
+	}
+	
+	protected static String renderSaml2Row(final String contextPath, final String url, final String clientName)
+	{
+		return HtmlTemplates.fromTemplate(SAML_ROW_TEMPLATE)
+			.withValue("url", contextPath + url)
+			.withValue("clientName", clientName)
+			.render();
+	}
+	
+	protected String getLoginErrorMessage(final HttpServletRequest request)
+	{
+		final HttpSession session = request.getSession(false);
+		if(session == null)
+		{
+			return "Invalid credentials";
+		}
+		if(!(session.getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION)
+			instanceof final AuthenticationException exception))
+		{
+			return "Invalid credentials";
+		}
+		if(!StringUtils.hasText(exception.getMessage()))
+		{
+			return "Invalid credentials";
+		}
+		return exception.getMessage();
+	}
+	
+	protected String renderHiddenInput(final String name, final String value)
+	{
+		return HtmlTemplates.fromTemplate(HIDDEN_HTML_INPUT_TEMPLATE)
+			.withValue("name", name)
+			.withValue("value", value)
+			.render();
+	}
+	
+	protected String renderRememberMe(final String paramName)
+	{
+		if(paramName == null)
+		{
+			return "";
+		}
+		return HtmlTemplates
+			.fromTemplate("<p><input type='checkbox' name='{{paramName}}'/> Remember me on this computer.</p>")
+			.withValue("paramName", paramName)
+			.render();
+	}
+	
+	protected String renderError(final boolean isError, final String message)
+	{
+		if(!isError)
+		{
+			return "";
+		}
+		return HtmlTemplates.fromTemplate(ALERT_TEMPLATE).withValue("message", message).render();
+	}
+	
+	// Bade naming of original method -> Created overload
+	protected String renderLogoutSuccess(final boolean isLogoutSuccess)
+	{
+		return this.renderSuccess(isLogoutSuccess);
+	}
+	
+	protected String renderSuccess(final boolean isLogoutSuccess)
+	{
+		if(!isLogoutSuccess)
+		{
+			return "";
+		}
+		return "<div class=\"alert alert-success\" role=\"alert\">You have been signed out</div>";
+	}
+	
+	protected static final String CSRF_HEADERS = """
+		{"{{headerName}}" : "{{headerValue}}"}""";
+	
+	// Improved: Removed XML comment and fix format
+	protected static final String PASSKEY_SCRIPT_TEMPLATE = """
+		  <script type="text/javascript" src="{{contextPath}}/login/webauthn.js"></script>
+		  <script type="text/javascript">
+		  document.addEventListener("DOMContentLoaded",() => setupLogin({{csrfHeaders}}, "{{contextPath}}", document.getElementById('passkey-signin')));
+		  </script>
+		""";
+	
+	protected static final String PASSKEY_FORM_TEMPLATE = """
+		<div class="login-form">
+		<h2>Login with Passkeys</h2>
+		<button id="passkey-signin" type="submit" class="primary">Sign in with a passkey</button>
+		</form>
+		""";
+	
+	protected static final String LOGIN_PAGE_TEMPLATE = """
+		<!DOCTYPE html>
+		<html lang="en">
+		  <head>
+		    <meta charset="utf-8">
+		    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		    <meta name="description" content="">
+		    <meta name="author" content="">
+		    <title>Please sign in</title>
+		    <link href="{{contextPath}}/default-ui.css" rel="stylesheet" />{{javaScript}}
+		  </head>
+		  <body>
+		    <div class="content">
+		{{formLogin}}
+		{{oneTimeTokenLogin}}{{passkeyLogin}}
+		{{oauth2Login}}
+		{{saml2Login}}
+		    </div>
+		  </body>
+		</html>""";
+	
+	protected static final String LOGIN_FORM_TEMPLATE = """
+		      <form class="login-form" method="post" action="{{loginUrl}}">
+		        <h2>Please sign in</h2>
+		{{errorMessage}}{{logoutMessage}}
+		        <p>
+		          <label for="username" class="screenreader">Username</label>
+		          <input type="text" id="username" name="{{usernameParameter}}" placeholder="Username" required autofocus>
+		        </p>
+		        <p>
+		          <label for="password" class="screenreader">Password</label>
+		          <input type="password" id="password" name="{{passwordParameter}}" placeholder="Password" {{autocomplete}}required>
+		        </p>
+		{{rememberMeInput}}
+		{{hiddenInputs}}
+		        <button type="submit" class="primary">Sign in</button>
+		      </form>""";
+	
+	protected static final String HIDDEN_HTML_INPUT_TEMPLATE = """
+		<input name="{{name}}" type="hidden" value="{{value}}" />
+		""";
+	
+	protected static final String ALERT_TEMPLATE = """
+		<div class="alert alert-danger" role="alert">{{message}}</div>""";
+	
+	protected static final String OAUTH2_LOGIN_TEMPLATE = """
+		<h2>Login with OAuth 2.0</h2>
+		{{errorMessage}}{{logoutMessage}}
+		<table class="table table-striped">
+		  {{oauth2Rows}}
+		</table>""";
+	
+	protected static final String OAUTH2_ROW_TEMPLATE = """
+		<tr><td><a href="{{url}}">{{clientName}}</a></td></tr>""";
+	
+	protected static final String SAML_LOGIN_TEMPLATE = """
+		<h2>Login with SAML 2.0</h2>
+		{{errorMessage}}{{logoutMessage}}
+		<table class="table table-striped">
+		  {{samlRows}}
+		</table>""";
+	
+	protected static final String SAML_ROW_TEMPLATE = OAUTH2_ROW_TEMPLATE;
+	
+	protected static final String ONE_TIME_TEMPLATE = """
+		      <form id="ott-form" class="login-form" method="post" action="{{generateOneTimeTokenUrl}}">
+		        <h2>Request a One-Time Token</h2>
+		{{errorMessage}}{{logoutMessage}}
+		        <p>
+		          <label for="ott-username" class="screenreader">Username</label>
+		          <input type="text" id="ott-username" name="username" placeholder="Username" required>
+		        </p>
+		{{hiddenInputs}}
+		        <button class="primary" type="submit" form="ott-form">Send Token</button>
+		      </form>
+		""";
 }
