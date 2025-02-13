@@ -65,15 +65,8 @@ public interface AdvancedSharedPageGeneratingFilter<S extends AdvancedSharedPage
 	
 	default String renderHiddenInputs(final Set<Map.Entry<String, String>> entries)
 	{
-		final StringBuilder sb = new StringBuilder(50);
-		for(final Map.Entry<String, String> input : entries)
-		{
-			sb.append("<input name=\"");
-			sb.append(input.getKey());
-			sb.append("\" type=\"hidden\" value=\"");
-			sb.append(input.getValue());
-			sb.append("\" />\n");
-		}
-		return sb.toString();
+		return entries.stream()
+			.map(e -> "<input name=\"" + e.getKey() + "\" type=\"hidden\" value=\"" + e.getValue() + "\" />\n")
+			.collect(Collectors.joining());
 	}
 }
