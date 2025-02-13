@@ -456,7 +456,7 @@ public class AdvancedLoginPageGeneratingFilter
 			+ "<div class='form-floating'>"
 			+ "  <input type='text' class='form-control' name=\"" + this.oneTimeTokenUsernameParameter + "\""
 			+ " id='ott-username' placeholder=\"" + this.oneTimeTokenUsernameText + "\" required>"
-			+ "  <label for='username'>" + this.oneTimeTokenUsernameParameter + "</label>"
+			+ "  <label for='username'>" + this.oneTimeTokenUsernameText + "</label>"
 			+ "</div>"
 			+ this.renderHiddenInputs(request)
 			+ this.createOneTimeTokenLoginSignInButton()
