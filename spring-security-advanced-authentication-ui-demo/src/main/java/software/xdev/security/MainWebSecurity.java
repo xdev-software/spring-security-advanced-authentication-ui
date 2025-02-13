@@ -14,6 +14,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.savedrequest.NullRequestCache;
@@ -65,11 +67,22 @@ public class MainWebSecurity
 				.referrerPolicy(r -> r.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
 				.contentSecurityPolicy(csp -> csp.policyDirectives(this.getCSP())))
 			.formLogin(Customizer.withDefaults())
+			.oneTimeTokenLogin(c -> c.tokenGenerationSuccessHandler(
+				(request, response, oneTimeToken) -> {
+					// Do nothing - Dummy
+				}))
 			.oauth2Login(c -> c.defaultSuccessUrl("/"))
 			.authorizeHttpRequests(urlRegistry -> urlRegistry.anyRequest().authenticated())
 			.requestCache(c -> c.requestCache(new NullRequestCache()));
 		
 		return http.build();
+	}
+	
+	// Required for OTT
+	@Bean
+	public UserDetailsService userDetailsService()
+	{
+		return new InMemoryUserDetailsManager();
 	}
 	
 	// Example CSP

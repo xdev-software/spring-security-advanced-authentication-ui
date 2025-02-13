@@ -18,6 +18,7 @@ package software.xdev.spring.security.web.authentication.ui.advanced.filters;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import software.xdev.spring.security.web.authentication.ui.extendable.filters.ExtendableDefaultPageGeneratingFilter;
@@ -47,9 +48,9 @@ public interface AdvancedSharedPageGeneratingFilter<S extends AdvancedSharedPage
 	S addHeaderMeta(String name, String content);
 	
 	default String generateHeader(
-		Map<String, String> headerMetas,
-		String pageTitle,
-		List<String> headerElements)
+		final Map<String, String> headerMetas,
+		final String pageTitle,
+		final List<String> headerElements)
 	{
 		return "  <head>"
 			+ "    <meta charset='utf-8'>"
@@ -60,5 +61,19 @@ public interface AdvancedSharedPageGeneratingFilter<S extends AdvancedSharedPage
 			+ Optional.ofNullable(pageTitle).map(t -> "    <title>" + t + "</title>").orElse("")
 			+ headerElements.stream().map(s -> "    " + s).collect(Collectors.joining())
 			+ "  </head>";
+	}
+	
+	default String renderHiddenInputs(final Set<Map.Entry<String, String>> entries)
+	{
+		final StringBuilder sb = new StringBuilder(50);
+		for(final Map.Entry<String, String> input : entries)
+		{
+			sb.append("<input name=\"");
+			sb.append(input.getKey());
+			sb.append("\" type=\"hidden\" value=\"");
+			sb.append(input.getValue());
+			sb.append("\" />\n");
+		}
+		return sb.toString();
 	}
 }

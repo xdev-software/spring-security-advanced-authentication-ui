@@ -106,4 +106,11 @@ public class AdvancedLogoutPageGeneratingFilter
 			+ "    </div>"
 			+ "  </body>";
 	}
+	
+	// Don't use template engine (with Regex) to improve performance
+	@Override
+	protected String renderHiddenInputs(final HttpServletRequest request)
+	{
+		return this.renderHiddenInputs(this.resolveHiddenInputs.apply(request).entrySet());
+	}
 }

@@ -137,7 +137,12 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	@Override
 	public boolean isEnabled()
 	{
-		return this.formLoginEnabled || this.oauth2LoginEnabled || this.saml2LoginEnabled;
+		// Improvement: OTT and Passkeys are missing!!!
+		return this.formLoginEnabled
+			|| this.oneTimeTokenEnabled
+			|| this.oauth2LoginEnabled
+			|| this.saml2LoginEnabled
+			|| this.passkeysEnabled;
 	}
 	
 	@Override
@@ -384,8 +389,11 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	}
 	
 	protected String renderOneTimeTokenLogin(
-		final HttpServletRequest request, final boolean loginError, final boolean logoutSuccess,
-		final String contextPath, final String errorMsg)
+		final HttpServletRequest request,
+		final boolean loginError,
+		final boolean logoutSuccess,
+		final String contextPath,
+		final String errorMsg)
 	{
 		if(!this.oneTimeTokenEnabled)
 		{
