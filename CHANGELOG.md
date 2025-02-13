@@ -1,3 +1,28 @@
+# 2.0.0
+* Added support for Spring Security 6.4+ / Spring Boot 3.4+ #100
+  * Spring now
+    * uses a Regex-based templating system
+    * no longer uses bootstrap
+    * provides One-Time token/OTT and Passkey logins
+* Changes to ``Extendable``-subsystem
+  * Now uses the new Regex-based templating system
+  * Correct a bunch of problems in Spring Security including
+    * One-Time token/OTT and Passkeys are ignored when computing if the whole filter is enabled
+    * [Passkeys] Removed invalid XML comment in scripts block
+    * [Passkeys] Fixed incorrectly closed HTML-form/div-tag
+    * [HtmlTemplating] Compile ``UNUSED_PLACEHOLDER_PATTERN`` regex once and not for each request
+    * [HtmlTemplating] Render: Optimization: Use entrySet instead of keySet + getValue
+    * Improved naming of methods
+* Changes to ``Advanced``-subsystem
+  * Keeps using Bootstrap
+    * By default bootstrap is still loaded from ``cdn.jsdelivr.net`` but you can (and should) provide your own version
+  * Keeps using the old templating system (no regex is used)
+    * Not all values are escaped by default as is with Spring's Regex based system
+      * Usually they don't need to be escaped in the first place as they are set on the server side and can't be modified by a user
+    * This is A LOT FASTER (in tests around 50x) than Spring's new Regex based system
+  * Adopted changes; Added new configuration options
+  * [Passkeys] Fixed a problem where more than one header results in invalid generated JavaScript code
+
 # 1.0.3
 * Updated dependencies
 * Abstracted code

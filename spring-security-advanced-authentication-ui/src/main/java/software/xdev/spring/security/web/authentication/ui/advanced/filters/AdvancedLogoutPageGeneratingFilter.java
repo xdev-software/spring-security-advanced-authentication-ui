@@ -107,7 +107,6 @@ public class AdvancedLogoutPageGeneratingFilter
 			+ "  </body>";
 	}
 	
-	// Don't use template engine (with Regex) to improve performance
 	@Override
 	protected String renderHiddenInputs(final HttpServletRequest request)
 	{

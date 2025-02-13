@@ -543,7 +543,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	protected static final String CSRF_HEADERS = """
 		{"{{headerName}}" : "{{headerValue}}"}""";
 	
-	// Improved: Removed XML comment and fix format
+	// Improvement: Removed XML comment and fix format
 	protected static final String PASSKEY_SCRIPT_TEMPLATE = """
 		  <script type="text/javascript" src="{{contextPath}}/login/webauthn.js"></script>
 		  <script type="text/javascript">
@@ -551,7 +551,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		  </script>
 		""";
 	
-	// Improved: Fix </form> being used for </div>
+	// Improvement: Fix </form> being used for </div>
 	protected static final String PASSKEY_FORM_TEMPLATE = """
 		<div class="login-form">
 		<h2>Login with Passkeys</h2>
