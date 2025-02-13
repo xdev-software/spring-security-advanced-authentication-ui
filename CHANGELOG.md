@@ -12,6 +12,7 @@
     * [Passkeys] Fixed incorrectly closed HTML-form/div-tag
     * [HtmlTemplating] Compile ``UNUSED_PLACEHOLDER_PATTERN`` regex once and not for each request
     * [HtmlTemplating] Render: Optimization: Use entrySet instead of keySet + getValue
+    * Add correct setter for ``generateOneTimeTokenUrl``
     * Improved naming of methods
 * Changes to ``Advanced``-subsystem
   * Keeps using Bootstrap

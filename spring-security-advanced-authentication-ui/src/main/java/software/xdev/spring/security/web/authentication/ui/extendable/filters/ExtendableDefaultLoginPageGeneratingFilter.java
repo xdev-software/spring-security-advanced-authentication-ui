@@ -205,10 +205,16 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		this.authenticationUrl = authenticationUrl;
 	}
 	
+	// Improvement: This is the correct name for the set method
+	public void setGenerateOneTimeTokenUrl(final String generateOneTimeTokenUrl)
+	{
+		this.generateOneTimeTokenUrl = generateOneTimeTokenUrl;
+	}
+	
 	@Override
 	public void setOneTimeTokenGenerationUrl(final String generateOneTimeTokenUrl)
 	{
-		this.generateOneTimeTokenUrl = generateOneTimeTokenUrl;
+		this.setGenerateOneTimeTokenUrl(generateOneTimeTokenUrl);
 	}
 	
 	@Override
