@@ -42,7 +42,6 @@ public class HtmlTemplates
 		return new Builder(template);
 	}
 	
-	@SuppressWarnings("checkstyle:FinalClass")
 	public static class Builder
 	{
 		// Improvement: Compile once
@@ -51,7 +50,7 @@ public class HtmlTemplates
 		protected final String template;
 		protected final Map<String, String> values = new HashMap<>();
 		
-		private Builder(final String template)
+		protected Builder(final String template)
 		{
 			this.template = template;
 		}
