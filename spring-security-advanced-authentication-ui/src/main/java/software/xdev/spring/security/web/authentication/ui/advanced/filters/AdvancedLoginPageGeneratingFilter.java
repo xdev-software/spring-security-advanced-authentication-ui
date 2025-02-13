@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -33,6 +34,7 @@ import software.xdev.spring.security.web.authentication.ui.advanced.StylingDefin
 import software.xdev.spring.security.web.authentication.ui.extendable.filters.ExtendableDefaultLoginPageGeneratingFilter;
 
 
+@SuppressWarnings({"PMD.GodClass", "unused"})
 public class AdvancedLoginPageGeneratingFilter
 	extends ExtendableDefaultLoginPageGeneratingFilter
 	implements AdvancedSharedPageGeneratingFilter<AdvancedLoginPageGeneratingFilter>
@@ -51,6 +53,8 @@ public class AdvancedLoginPageGeneratingFilter
 	
 	protected String header = "";
 	
+	protected String passKeysWebAuthnScriptLocation = "/login/webauthn.js";
+	
 	protected String formLoginUsernameText = "Username";
 	
 	protected String formLoginPasswordText = "Password";
@@ -58,6 +62,18 @@ public class AdvancedLoginPageGeneratingFilter
 	protected String formLoginRememberMeText = "Remember me on this computer";
 	
 	protected String formLoginSignInText = "Sign in";
+	
+	protected String oneTimeTokenHeaderText = "Request a One-Time Token";
+	
+	protected String oneTimeTokenUsernameParameter = "username";
+	
+	protected String oneTimeTokenUsernameText = "Username";
+	
+	protected String oneTimeTokenSendTokenText = "Send token";
+	
+	protected String passkeyLoginHeaderText = "Login with Passkeys";
+	
+	protected String passkeySignInSubmitText = "Sign in with a passkey";
 	
 	protected String ssoLoginHeaderText = "Login with";
 	
@@ -156,6 +172,42 @@ public class AdvancedLoginPageGeneratingFilter
 		return this;
 	}
 	
+	public AdvancedLoginPageGeneratingFilter oneTimeTokenHeaderText(final String oneTimeTokenHeaderText)
+	{
+		this.oneTimeTokenHeaderText = oneTimeTokenHeaderText;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter oneTimeTokenUsernameText(final String oneTimeTokenUsernameText)
+	{
+		this.oneTimeTokenUsernameText = oneTimeTokenUsernameText;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter oneTimeTokenUsernameParameter(final String oneTimeTokenUsernameParameter)
+	{
+		this.oneTimeTokenUsernameParameter = oneTimeTokenUsernameParameter;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter oneTimeTokenSendTokenText(final String oneTimeTokenSendTokenText)
+	{
+		this.oneTimeTokenSendTokenText = oneTimeTokenSendTokenText;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter passkeyLoginHeaderText(final String passkeyLoginHeaderText)
+	{
+		this.passkeyLoginHeaderText = passkeyLoginHeaderText;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter passkeySignInSubmitText(final String passkeySignInSubmitText)
+	{
+		this.passkeySignInSubmitText = passkeySignInSubmitText;
+		return this;
+	}
+	
 	public AdvancedLoginPageGeneratingFilter ssoLoginHeaderText(final String ssoLoginHeaderText)
 	{
 		this.ssoLoginHeaderText = ssoLoginHeaderText;
@@ -185,33 +237,104 @@ public class AdvancedLoginPageGeneratingFilter
 		final boolean loginError,
 		final boolean logoutSuccess)
 	{
+		final String contextPath = request.getContextPath();
+		
 		return "<!DOCTYPE html>"
 			+ "<html lang='en' style='height:100%'>"
-			+ this.generateHeader()
-			+ this.generateBody(request, loginError, logoutSuccess)
+			+ this.generateHeader(request, contextPath)
+			+ this.generateBody(request, contextPath, loginError, logoutSuccess)
 			+ "</html>";
 	}
 	
-	protected String generateHeader()
+	// region Header
+	
+	protected String generateHeader(
+		final HttpServletRequest request,
+		final String contextPath)
 	{
-		return this.generateHeader(this.headerMetas, this.pageTitle, this.headerElements);
+		return this.generateHeader(
+			this.headerMetas,
+			this.pageTitle,
+			this.requiresAdditionalHeaderElements()
+				? Stream.concat(
+					this.headerElements.stream(),
+					this.additionalHeaderElements(request, contextPath).stream())
+				.toList()
+				: this.headerElements);
 	}
+	
+	protected boolean requiresAdditionalHeaderElements()
+	{
+		return this.passkeysEnabled;
+	}
+	
+	protected List<String> additionalHeaderElements(
+		final HttpServletRequest request,
+		final String contextPath)
+	{
+		final List<String> additionalHeaderElements = new ArrayList<>();
+		
+		if(this.passkeysEnabled)
+		{
+			additionalHeaderElements.addAll(this.createPassKeyHeaderElements(request, contextPath));
+		}
+		
+		return additionalHeaderElements;
+	}
+	
+	protected List<String> createPassKeyHeaderElements(
+		final HttpServletRequest request,
+		final String contextPath)
+	{
+		return List.of(
+			"<script type=\"text/javascript\" src=\"" + contextPath + this.passKeysWebAuthnScriptLocation
+				+ "\"></script>",
+			this.createPassKeyScript(request, contextPath)
+		);
+	}
+	
+	protected String createPassKeyScript(
+		final HttpServletRequest request,
+		final String contextPath)
+	{
+		return """
+			<script type="text/javascript">
+			document.addEventListener("DOMContentLoaded",\
+			() => setupLogin(%s, "%s", document.getElementById('passkey-signin')));
+			</script>
+			""".formatted(this.renderHeadersForFetchAPI(request), contextPath);
+	}
+	
+	protected String renderHeadersForFetchAPI(final HttpServletRequest request)
+	{
+		return "{ "
+			+ this.resolveHeaders.apply(request).entrySet()
+			.stream()
+			.map(e -> "\"" + e.getKey() + "\": \"" + e.getValue() + "\"")
+			.collect(Collectors.joining(", "))
+			+ " }";
+	}
+	
+	// endregion
+	// region Body
 	
 	protected String generateBody(
 		final HttpServletRequest request,
+		final String contextPath,
 		final boolean loginError,
 		final boolean logoutSuccess)
 	{
 		final String errorMsg = loginError ? this.getLoginErrorMessage(request) : "Invalid credentials";
-		final String contextPath = request.getContextPath();
 		
 		return "  " + this.createBodyElement()
 			+ "     " + this.createContainerElement()
 			+ "     " + this.createMainElement()
-			+ this.createError(loginError, errorMsg)
-			+ this.createLogoutSuccess(logoutSuccess)
+			+ this.renderError(loginError, errorMsg)
+			+ this.renderLogoutSuccess(logoutSuccess)
 			+ this.header
 			+ this.createFormLogin(request, contextPath)
+			+ this.createOneTimeTokenLogin(request, contextPath)
+			+ this.createPasskeyFormLogin()
 			+ (this.hasSSOLogin() ? this.createHeaderLoginWith() : "")
 			+ this.createOAuth2LoginPagePart(contextPath)
 			+ this.createSaml2LoginPagePart(contextPath)
@@ -266,6 +389,18 @@ public class AdvancedLoginPageGeneratingFilter
 			+ "'>";
 	}
 	
+	@Override
+	protected String renderError(final boolean isError, final String message)
+	{
+		if(!isError)
+		{
+			return "";
+		}
+		return "<div class=\"alert alert-danger\" role=\"alert\">" + HtmlUtils.htmlEscape(message) + "</div>";
+	}
+	
+	// region Render FormLogin
+	
 	@SuppressWarnings("java:S1192")
 	protected String createFormLogin(final HttpServletRequest request, final String contextPath)
 	{
@@ -290,23 +425,85 @@ public class AdvancedLoginPageGeneratingFilter
 			+ "</form>";
 	}
 	
-	protected String createFormLoginSignInButton()
-	{
-		return "<button class=\"btn btn-block btn-primary w-100\" type=\"submit\">"
-			+ this.formLoginSignInText
-			+ "</button>";
-	}
-	
-	@Override
 	protected String createRememberMe(final String paramName)
 	{
-		return "<div class=\"form-check text-start my-2\">"
+		return "<div class=\"form-check text-start mt-1\">"
 			+ "<label for='remember-me' class=\"form-check-label\">"
 			+ this.formLoginRememberMeText
 			+ "</label>"
 			+ "<input class=\"form-check-input\" type='checkbox' name='" + paramName + "' id='remember-me'/>"
 			+ "</div>";
 	}
+	
+	protected String createFormLoginSignInButton()
+	{
+		return this.createFormSubmitButton(this.formLoginSignInText);
+	}
+	
+	// endregion
+	// region Render OTT
+	
+	protected String createOneTimeTokenLogin(final HttpServletRequest request, final String contextPath)
+	{
+		if(!this.oneTimeTokenEnabled)
+		{
+			return "";
+		}
+		
+		return this.createOneTimeTokenLoginHeader()
+			+ "<form id=\"ott-form\" class=\"mb-3\" method=\"post\" action=\"" + contextPath
+			+ this.generateOneTimeTokenUrl + "\">"
+			+ "<div class='form-floating'>"
+			+ "  <input type='text' class='form-control' name=\"" + this.oneTimeTokenUsernameParameter + "\""
+			+ " id='ott-username' placeholder=\"" + this.oneTimeTokenUsernameText + "\" required>"
+			+ "  <label for='username'>" + this.oneTimeTokenUsernameParameter + "</label>"
+			+ "</div>"
+			+ this.renderHiddenInputs(request)
+			+ this.createOneTimeTokenLoginSignInButton()
+			+ "</form>";
+	}
+	
+	protected String createOneTimeTokenLoginHeader()
+	{
+		return this.createLoginMethodHeader(this.oneTimeTokenHeaderText);
+	}
+	
+	protected String createOneTimeTokenLoginSignInButton()
+	{
+		return this.createFormSubmitButton(this.oneTimeTokenSendTokenText);
+	}
+	
+	// endregion
+	// region Render Passkeys
+	
+	protected String createPasskeyFormLogin()
+	{
+		if(!this.passkeysEnabled)
+		{
+			return "";
+		}
+		
+		return this.createPasskeyFormLoginHeader()
+			// This needs to be a div and not a form
+			+ "<div id=\"passkey-form\" class=\"mb-3 login-form\">"
+			+ this.createPasskeyForSignInButton()
+			+ "</div>";
+	}
+	
+	protected String createPasskeyFormLoginHeader()
+	{
+		return this.createLoginMethodHeader(this.passkeyLoginHeaderText);
+	}
+	
+	protected String createPasskeyForSignInButton()
+	{
+		return "<button id=\"passkey-signin\" class=\"btn btn-block btn-primary w-100 mt-1\" type=\"submit\">"
+			+ this.passkeySignInSubmitText
+			+ "</button>";
+	}
+	
+	// endregion
+	// region Render SSO
 	
 	protected boolean hasSSOLogin()
 	{
@@ -315,9 +512,7 @@ public class AdvancedLoginPageGeneratingFilter
 	
 	protected String createHeaderLoginWith()
 	{
-		return "<h5 class=\"h5 mb-2 fw-normal\">"
-			+ this.ssoLoginHeaderText
-			+ "</h5>";
+		return this.createLoginMethodHeader(this.ssoLoginHeaderText);
 	}
 	
 	protected String createOAuth2LoginPagePart(final String contextPath)
@@ -378,6 +573,27 @@ public class AdvancedLoginPageGeneratingFilter
 			.collect(Collectors.joining())
 			+ "</table>";
 	}
+	
+	// endregion
+	
+	protected String createLoginMethodHeader(final String text)
+	{
+		return "<h5 class=\"h5 mb-2 fw-normal\">" + text + "</h5>";
+	}
+	
+	public String createFormSubmitButton(final String text)
+	{
+		return "<button class=\"btn btn-block btn-primary w-100 mt-1\" type=\"submit\">"
+			+ text
+			+ "</button>";
+	}
+	
+	protected String renderHiddenInputs(final HttpServletRequest request)
+	{
+		return this.renderHiddenInputs(this.resolveHiddenInputs.apply(request).entrySet());
+	}
+	
+	// endregion
 	
 	protected record ButtonBuildingData(
 		String url,
