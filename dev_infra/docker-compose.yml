@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   # Docs: https://docs.duendesoftware.com
   oidc-server-mock:
