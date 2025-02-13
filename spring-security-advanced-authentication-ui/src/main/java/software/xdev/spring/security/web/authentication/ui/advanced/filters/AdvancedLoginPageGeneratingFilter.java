@@ -34,7 +34,7 @@ import software.xdev.spring.security.web.authentication.ui.advanced.StylingDefin
 import software.xdev.spring.security.web.authentication.ui.extendable.filters.ExtendableDefaultLoginPageGeneratingFilter;
 
 
-@SuppressWarnings("unused") // This is an API ;)
+@SuppressWarnings({"PMD.GodClass", "unused"})
 public class AdvancedLoginPageGeneratingFilter
 	extends ExtendableDefaultLoginPageGeneratingFilter
 	implements AdvancedSharedPageGeneratingFilter<AdvancedLoginPageGeneratingFilter>
