@@ -35,7 +35,7 @@ A more detailed scenario is available in the [demo](./spring-security-advanced-a
 > [!NOTE]
 > By default [Bootstrap](https://github.com/twbs/bootstrap) is loaded from ``cdn.jsdelivr.net``.<br/>
 > Due to privacy and stability reasons you should ship your own version!<br/>
-> An example how this can be done is shown in the demo.
+> An example how this can be done is shown in the [demo](https://github.com/xdev-software/spring-security-advanced-authentication-ui/blob/4117d471e036de4dc2a58b2b484f2631afe7af50/spring-security-advanced-authentication-ui-demo/src/main/java/software/xdev/security/MainWebSecurity.java#L44-L51).
 
 > [!NOTE]
 > The ``Advanced``-subsystem uses the pre-``Spring Security 6.4`` / ``Spring Boot 3.4`` templating system (without Regex).<br/>
