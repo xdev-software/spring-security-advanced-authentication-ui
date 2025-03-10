@@ -2,7 +2,7 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/xdev-software/spring-security-advanced-authentication-ui/check-build.yml?branch=develop)](https://github.com/xdev-software/spring-security-advanced-authentication-ui/actions/workflows/check-build.yml?query=branch%3Adevelop)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=xdev-software_spring-security-advanced-authentication-ui&metric=alert_status)](https://sonarcloud.io/dashboard?id=xdev-software_spring-security-advanced-authentication-ui)
 
-# spring-security-advanced-authentication-ui
+# Advanced authentication UI for Spring Security
 
 Modernizes the default Spring Web Authentication/Login UI and makes it easier customizable.
 
