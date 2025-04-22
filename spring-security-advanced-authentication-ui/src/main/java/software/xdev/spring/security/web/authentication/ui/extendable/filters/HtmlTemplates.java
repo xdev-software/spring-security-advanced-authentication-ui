@@ -31,9 +31,9 @@ import org.springframework.web.util.HtmlUtils;
  * @author Daniel Garnier-Moiroux
  * @since 6.4
  */
-public class HtmlTemplates
+public final class HtmlTemplates
 {
-	protected HtmlTemplates()
+	private HtmlTemplates()
 	{
 	}
 	

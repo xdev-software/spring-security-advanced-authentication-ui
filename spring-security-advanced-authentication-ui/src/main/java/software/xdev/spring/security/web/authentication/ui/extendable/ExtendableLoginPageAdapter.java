@@ -203,7 +203,7 @@ public abstract class ExtendableLoginPageAdapter<
 		this.copyDataFromExistingFilters = copyDataFromExistingFilters;
 		
 		this.installUsingInitMethod = installWith == InstallWith.INIT_METHOD
-			|| (installWith == null && httpSecurity == null);
+			|| installWith == null && httpSecurity == null;
 		
 		if(!this.installUsingInitMethod)
 		{
