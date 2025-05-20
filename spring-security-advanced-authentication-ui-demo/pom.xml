@@ -28,7 +28,7 @@
 
 		<mainClass>software.xdev.Application</mainClass>
 
-		<org.springframework.boot.version>3.4.2</org.springframework.boot.version>
+		<org.springframework.boot.version>3.4.5</org.springframework.boot.version>
 	</properties>
 
 	<dependencyManagement>
@@ -68,7 +68,7 @@
 		<dependency>
 			<groupId>com.webauthn4j</groupId>
 			<artifactId>webauthn4j-core</artifactId>
-			<version>0.28.5.RELEASE</version>
+			<version>0.29.2.RELEASE</version>
 		</dependency>
 
 		<dependency>
@@ -85,7 +85,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
+				<version>3.14.0</version>
 				<configuration>
 					<release>${maven.compiler.release}</release>
 					<compilerArgs>
