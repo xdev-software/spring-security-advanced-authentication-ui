@@ -29,13 +29,9 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 // CPD-OFF - Upstream copy
 
@@ -369,8 +365,11 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	}
 	
 	protected String renderFormLogin(
-		final HttpServletRequest request, final boolean loginError, final boolean logoutSuccess,
-		final String contextPath, final String errorMsg)
+		final HttpServletRequest request,
+		final boolean loginError,
+		final boolean logoutSuccess,
+		final String contextPath,
+		final String errorMsg)
 	{
 		if(!this.formLoginEnabled)
 		{
@@ -485,21 +484,9 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	
 	protected String getLoginErrorMessage(final HttpServletRequest request)
 	{
-		final HttpSession session = request.getSession(false);
-		if(session == null)
-		{
-			return "Invalid credentials";
-		}
-		if(!(session.getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION)
-			instanceof final AuthenticationException exception))
-		{
-			return "Invalid credentials";
-		}
-		if(!StringUtils.hasText(exception.getMessage()))
-		{
-			return "Invalid credentials";
-		}
-		return exception.getMessage();
+		// Was changed in Spring Boot 3.5 to always return the same message
+		// https://github.com/spring-projects/spring-security/commit/c4b223266c7c4713823634326705b586b47a58c4
+		return "Invalid credentials";
 	}
 	
 	protected String renderHiddenInput(final String name, final String value)
