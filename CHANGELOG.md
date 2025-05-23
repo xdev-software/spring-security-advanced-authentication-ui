@@ -1,3 +1,7 @@
+# 2.1.0
+* Updated to Spring Security 6.5+ / Spring Boot 3.5+
+  * [``Extendable``] Backported some minor upstream changes
+
 # 2.0.1
 * Migrated deployment to _Sonatype Maven Central Portal_ [#155](https://github.com/xdev-software/standard-maven-template/issues/155)
 * Updated dependencies

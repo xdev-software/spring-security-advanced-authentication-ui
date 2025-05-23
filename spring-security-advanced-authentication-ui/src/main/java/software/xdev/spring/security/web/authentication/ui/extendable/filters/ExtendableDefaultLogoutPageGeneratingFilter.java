@@ -27,8 +27,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.core.log.LogMessage;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
@@ -41,7 +42,7 @@ public class ExtendableDefaultLogoutPageGeneratingFilter
 	extends DefaultLogoutPageGeneratingFilter
 	implements GeneratingFilterFillDataFrom<DefaultLogoutPageGeneratingFilter>, ExtendableDefaultPageGeneratingFilter
 {
-	protected RequestMatcher matcher = new AntPathRequestMatcher("/logout", "GET");
+	protected RequestMatcher matcher = PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/logout");
 	
 	protected Function<HttpServletRequest, Map<String, String>> resolveHiddenInputs =
 		request -> Collections.emptyMap();
