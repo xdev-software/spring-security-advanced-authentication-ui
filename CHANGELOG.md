@@ -1,3 +1,6 @@
+# 2.1.1
+* Updated dependencies
+
 # 2.1.0
 * Updated to Spring Security 6.5+ / Spring Boot 3.5+
   * [``Extendable``] Backported some minor upstream changes
