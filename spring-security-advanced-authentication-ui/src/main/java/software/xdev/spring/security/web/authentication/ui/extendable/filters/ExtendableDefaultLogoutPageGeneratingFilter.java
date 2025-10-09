@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -113,16 +114,14 @@ public class ExtendableDefaultLogoutPageGeneratingFilter
 		"PMD.InefficientStringBuffering"})
 	protected String renderHiddenInputs(final HttpServletRequest request)
 	{
-		final StringBuilder sb = new StringBuilder();
-		for(final Map.Entry<String, String> input : this.resolveHiddenInputs.apply(request).entrySet())
-		{
-			final String inputElement = HtmlTemplates.fromTemplate(HIDDEN_HTML_INPUT_TEMPLATE)
+		return this.resolveHiddenInputs.apply(request)
+			.entrySet()
+			.stream()
+			.map(input -> HtmlTemplates.fromTemplate(HIDDEN_HTML_INPUT_TEMPLATE)
 				.withValue("name", input.getKey())
 				.withValue("value", input.getValue())
-				.render();
-			sb.append(inputElement);
-		}
-		return sb.toString();
+				.render())
+			.collect(Collectors.joining());
 	}
 	
 	// Method is missing on upstream

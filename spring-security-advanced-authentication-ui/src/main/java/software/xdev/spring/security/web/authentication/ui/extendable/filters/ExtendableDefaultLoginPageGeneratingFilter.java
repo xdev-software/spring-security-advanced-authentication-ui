@@ -352,16 +352,14 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	
 	protected String renderHeaders(final HttpServletRequest request)
 	{
-		final StringBuilder javascriptHeadersEntries = new StringBuilder();
-		final Map<String, String> headers = this.resolveHeaders.apply(request);
-		for(final Map.Entry<String, String> header : headers.entrySet())
-		{
-			javascriptHeadersEntries.append(HtmlTemplates.fromTemplate(CSRF_HEADERS)
+		return this.resolveHeaders.apply(request)
+			.entrySet()
+			.stream()
+			.map(header -> HtmlTemplates.fromTemplate(CSRF_HEADERS)
 				.withValue("headerName", header.getKey())
 				.withValue("headerValue", header.getValue())
-				.render());
-		}
-		return javascriptHeadersEntries.toString();
+				.render())
+			.collect(Collectors.joining());
 	}
 	
 	protected String renderFormLogin(
