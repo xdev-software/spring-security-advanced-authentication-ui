@@ -80,11 +80,7 @@ public class ExtendableDefaultLogoutPageGeneratingFilter
 		}
 	}
 	
-	@SuppressWarnings({
-		"PMD.ConsecutiveLiteralAppends",
-		"PMD.ConsecutiveAppendsShouldReuse",
-		"PMD.InefficientStringBuffering",
-		"checkstyle:MagicNumber"})
+	@SuppressWarnings("checkstyle:MagicNumber")
 	protected void renderLogout(final HttpServletRequest request, final HttpServletResponse response) throws IOException
 	{
 		final String renderedPage = HtmlTemplates.fromTemplate(LOGOUT_PAGE_TEMPLATE)
@@ -108,10 +104,6 @@ public class ExtendableDefaultLogoutPageGeneratingFilter
 		this.resolveHiddenInputs = resolveHiddenInputs;
 	}
 	
-	@SuppressWarnings({
-		"PMD.ConsecutiveLiteralAppends",
-		"PMD.ConsecutiveAppendsShouldReuse",
-		"PMD.InefficientStringBuffering"})
 	protected String renderHiddenInputs(final HttpServletRequest request)
 	{
 		return this.resolveHiddenInputs.apply(request)
