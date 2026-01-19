@@ -18,9 +18,11 @@ package software.xdev.spring.security.web.authentication.ui.extendable.filters;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.FilterChain;
@@ -30,8 +32,13 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.jspecify.annotations.Nullable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.util.Assert;
+import org.springframework.web.util.UriComponentsBuilder;
 
 // CPD-OFF - Upstream copy
 
@@ -44,10 +51,16 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	extends DefaultLoginPageGeneratingFilter
 	implements GeneratingFilterFillDataFrom<DefaultLoginPageGeneratingFilter>, ExtendableDefaultPageGeneratingFilter
 {
+	protected SecurityContextHolderStrategy securityContextHolderStrategy =
+		SecurityContextHolder.getContextHolderStrategy();
+	
+	@Nullable
 	protected String loginPageUrl;
 	
+	@Nullable
 	protected String logoutSuccessUrl;
 	
+	@Nullable
 	protected String failureUrl;
 	
 	protected boolean formLoginEnabled;
@@ -60,15 +73,29 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	
 	protected boolean oneTimeTokenEnabled;
 	
+	@Nullable
 	protected String authenticationUrl;
 	
+	@Nullable
 	protected String generateOneTimeTokenUrl;
 	
+	@Nullable
 	protected String usernameParameter;
 	
+	@Nullable
 	protected String passwordParameter;
 	
+	@Nullable
 	protected String rememberMeParameter;
+	
+	// For some reason this is final upstream but not static?
+	protected String factorTypeParameter = "factor.type";
+	
+	// For some reason this is final upstream but not static?
+	protected String factorReasonParameter = "factor.reason";
+	
+	// For some reason this is final upstream but not static?
+	protected List<String> allowedParameters = List.of(this.factorTypeParameter, this.factorReasonParameter);
 	
 	protected Map<String, String> oauth2AuthenticationUrlToClientName;
 	
@@ -84,6 +111,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	public void fillDataFrom(final DefaultLoginPageGeneratingFilter source)
 	{
 		this.fillDataFrom(DefaultLoginPageGeneratingFilter.class, source, Set.of(
+			new CopyInfo<>("securityContextHolderStrategy", this::setSecurityContextHolderStrategy),
 			new CopyInfo<>("loginPageUrl", this::setLoginPageUrl),
 			new CopyInfo<>("logoutSuccessUrl", this::setLogoutSuccessUrl),
 			new CopyInfo<>("failureUrl", this::setFailureUrl),
@@ -100,8 +128,18 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 			new CopyInfo<>("oauth2AuthenticationUrlToClientName", this::setOauth2AuthenticationUrlToClientName),
 			new CopyInfo<>("saml2AuthenticationUrlToProviderName", this::setSaml2AuthenticationUrlToProviderName),
 			new CopyInfo<>("resolveHiddenInputs", this::setResolveHiddenInputs),
-			new CopyInfo<>("resolveHeaders", this::setResolveHeaders)
+			new CopyInfo<>("resolveHeaders", this::setResolveHeaders),
+			new CopyInfo<String>("factorTypeParameter", v -> this.factorTypeParameter = v),
+			new CopyInfo<String>("factorReasonParameter", v -> this.factorReasonParameter = v),
+			new CopyInfo<List<String>>("allowedParameters", v -> this.allowedParameters = v)
 		));
+	}
+	
+	@Override
+	public void setSecurityContextHolderStrategy(final SecurityContextHolderStrategy securityContextHolderStrategy)
+	{
+		Assert.notNull(securityContextHolderStrategy, "securityContextHolderStrategy cannot be null");
+		this.securityContextHolderStrategy = securityContextHolderStrategy;
 	}
 	
 	/**
@@ -148,7 +186,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 	}
 	
 	@Override
-	public String getLoginPageUrl()
+	public @Nullable String getLoginPageUrl()
 	{
 		return this.loginPageUrl;
 	}
@@ -231,6 +269,30 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		this.rememberMeParameter = rememberMeParameter;
 	}
 	
+	/**
+	 * @apiNote Only exists for compatibility reasons
+	 */
+	public void setFactorTypeParameter(final String factorTypeParameter)
+	{
+		this.factorTypeParameter = factorTypeParameter;
+	}
+	
+	/**
+	 * @apiNote Only exists for compatibility reasons
+	 */
+	public void setFactorReasonParameter(final String factorReasonParameter)
+	{
+		this.factorReasonParameter = factorReasonParameter;
+	}
+	
+	/**
+	 * @apiNote Only exists for compatibility reasons
+	 */
+	public void setAllowedParameters(final List<String> allowedParameters)
+	{
+		this.allowedParameters = allowedParameters;
+	}
+	
 	@Override
 	public void setOauth2AuthenticationUrlToClientName(final Map<String, String> oauth2AuthenticationUrlToClientName)
 	{
@@ -268,6 +330,14 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		chain.doFilter(request, response);
 	}
 	
+	protected @Nullable String getUsername()
+	{
+		final Authentication authentication = this.securityContextHolderStrategy.getContext().getAuthentication();
+		return authentication != null && authentication.isAuthenticated()
+			? authentication.getName()
+			: null;
+	}
+	
 	protected boolean isLogoutSuccess(final HttpServletRequest request)
 	{
 		return this.logoutSuccessUrl != null && this.matches(request, this.logoutSuccessUrl);
@@ -300,11 +370,34 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		{
 			uri += "?" + request.getQueryString();
 		}
+		final String urlToCompare = this.matchesGetUrlToCompare(request, url);
 		if("".equals(request.getContextPath()))
 		{
-			return uri.equals(url);
+			return uri.equals(urlToCompare);
 		}
-		return uri.equals(request.getContextPath() + url);
+		return uri.equals(request.getContextPath() + urlToCompare);
+	}
+	
+	protected String matchesGetUrlToCompare(final HttpServletRequest request, final String url)
+	{
+		final UriComponentsBuilder addAllowed = this.matchesParseUriString(url);
+		for(final String parameter : this.allowedParameters)
+		{
+			final String[] values = request.getParameterValues(parameter);
+			if(values != null)
+			{
+				for(final String value : values)
+				{
+					addAllowed.queryParam(parameter, value);
+				}
+			}
+		}
+		return addAllowed.toUriString();
+	}
+	
+	protected UriComponentsBuilder matchesParseUriString(final String url)
+	{
+		return UriComponentsBuilder.fromUriString(url);
 	}
 	
 	protected String generateLoginPageHtml(
@@ -315,17 +408,54 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		final String errorMsg = loginError ? this.getLoginErrorMessage(request) : "Invalid credentials";
 		final String contextPath = request.getContextPath();
 		
-		return HtmlTemplates.fromTemplate(LOGIN_PAGE_TEMPLATE)
+		final HtmlTemplates.Builder builder = HtmlTemplates.fromTemplate(LOGIN_PAGE_TEMPLATE)
 			.withRawHtml("contextPath", contextPath)
-			.withRawHtml("javaScript", this.renderJavaScript(request, contextPath))
-			.withRawHtml("formLogin", this.renderFormLogin(request, loginError, logoutSuccess, contextPath, errorMsg))
-			.withRawHtml(
+			.withRawHtml("javaScript", "")
+			.withRawHtml("formLogin", "")
+			.withRawHtml("oneTimeTokenLogin", "")
+			.withRawHtml("oauth2Login", "")
+			.withRawHtml("saml2Login", "")
+			.withRawHtml("passkeyLogin", "");
+		
+		final Predicate<String> wantsAuthority = this.wantsAuthority(request);
+		if(wantsAuthority.test("webauthn"))
+		{
+			builder.withRawHtml("javaScript", this.renderJavaScript(request, contextPath))
+				.withRawHtml("passkeyLogin", this.renderPasskeyLogin());
+		}
+		if(wantsAuthority.test("password"))
+		{
+			builder.withRawHtml(
+				"formLogin",
+				this.renderFormLogin(request, loginError, logoutSuccess, contextPath, errorMsg));
+		}
+		if(wantsAuthority.test("ott"))
+		{
+			builder.withRawHtml(
 				"oneTimeTokenLogin",
-				this.renderOneTimeTokenLogin(request, loginError, logoutSuccess, contextPath, errorMsg))
-			.withRawHtml("oauth2Login", this.renderOAuth2Login(loginError, logoutSuccess, errorMsg, contextPath))
-			.withRawHtml("saml2Login", this.renderSaml2Login(loginError, logoutSuccess, errorMsg, contextPath))
-			.withRawHtml("passkeyLogin", this.renderPasskeyLogin())
-			.render();
+				this.renderOneTimeTokenLogin(request, loginError, logoutSuccess, contextPath, errorMsg));
+		}
+		if(wantsAuthority.test("authorization_code"))
+		{
+			builder.withRawHtml(
+				"oauth2Login",
+				this.renderOAuth2Login(loginError, logoutSuccess, errorMsg, contextPath));
+		}
+		if(wantsAuthority.test("saml_response"))
+		{
+			builder.withRawHtml("saml2Login", this.renderSaml2Login(loginError, logoutSuccess, errorMsg, contextPath));
+		}
+		return builder.render();
+	}
+	
+	protected Predicate<String> wantsAuthority(final HttpServletRequest request)
+	{
+		final String[] authorities = request.getParameterValues(this.factorTypeParameter);
+		if(authorities == null)
+		{
+			return authority -> true;
+		}
+		return Set.of(authorities)::contains;
 	}
 	
 	protected String renderJavaScript(final HttpServletRequest request, final String contextPath)
@@ -374,6 +504,13 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 			return "";
 		}
 		
+		final String username = this.getUsername();
+		final String usernameInput = (username != null
+			? HtmlTemplates.fromTemplate(FORM_READONLY_USERNAME_INPUT).withValue("username", username)
+			: HtmlTemplates.fromTemplate(FORM_USERNAME_INPUT))
+			.withValue("usernameParameter", this.usernameParameter)
+			.render();
+		
 		final String hiddenInputs = this.resolveHiddenInputs.apply(request)
 			.entrySet()
 			.stream()
@@ -384,6 +521,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 			.withValue("loginUrl", contextPath + this.authenticationUrl)
 			.withRawHtml("errorMessage", this.renderError(loginError, errorMsg))
 			.withRawHtml("logoutMessage", this.renderSuccess(logoutSuccess))
+			.withRawHtml("usernameInput", usernameInput)
 			.withValue("usernameParameter", this.usernameParameter)
 			.withValue("passwordParameter", this.passwordParameter)
 			.withRawHtml("rememberMeInput", this.renderRememberMe(this.rememberMeParameter))
@@ -410,11 +548,17 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 			.map(inputKeyValue -> this.renderHiddenInput(inputKeyValue.getKey(), inputKeyValue.getValue()))
 			.collect(Collectors.joining("\n"));
 		
+		final String username = this.getUsername();
+		final String usernameInput = username != null
+			? HtmlTemplates.fromTemplate(ONE_TIME_READONLY_USERNAME_INPUT).withValue("username", username).render()
+			: ONE_TIME_USERNAME_INPUT;
+		
 		return HtmlTemplates.fromTemplate(ONE_TIME_TEMPLATE)
 			.withValue("generateOneTimeTokenUrl", contextPath + this.generateOneTimeTokenUrl)
 			.withRawHtml("errorMessage", this.renderError(loginError, errorMsg))
 			.withRawHtml("logoutMessage", this.renderSuccess(logoutSuccess))
 			.withRawHtml("hiddenInputs", hiddenInputs)
+			.withRawHtml("usernameInput", usernameInput)
 			.render();
 	}
 	
@@ -577,7 +721,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		{{errorMessage}}{{logoutMessage}}
 		        <p>
 		          <label for="username" class="screenreader">Username</label>
-		          <input type="text" id="username" name="{{usernameParameter}}" placeholder="Username" required autofocus>
+		          {{usernameInput}}
 		        </p>
 		        <p>
 		          <label for="password" class="screenreader">Password</label>
@@ -587,6 +731,14 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		{{hiddenInputs}}
 		        <button type="submit" class="primary">Sign in</button>
 		      </form>""";
+	
+	protected static final String FORM_READONLY_USERNAME_INPUT = """
+		<input type="text" id="username" name="{{usernameParameter}}" value="{{username}}" placeholder="Username" required readonly>
+		""";
+	
+	protected static final String FORM_USERNAME_INPUT = """
+		<input type="text" id="username" name="{{usernameParameter}}" placeholder="Username" required autofocus>
+		""";
 	
 	protected static final String HIDDEN_HTML_INPUT_TEMPLATE = """
 		<input name="{{name}}" type="hidden" value="{{value}}" />
@@ -620,10 +772,18 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		{{errorMessage}}{{logoutMessage}}
 		        <p>
 		          <label for="ott-username" class="screenreader">Username</label>
-		          <input type="text" id="ott-username" name="username" placeholder="Username" required>
+		          {{usernameInput}}
 		        </p>
 		{{hiddenInputs}}
 		        <button class="primary" type="submit" form="ott-form">Send Token</button>
 		      </form>
+		""";
+	
+	private static final String ONE_TIME_READONLY_USERNAME_INPUT = """
+		<input type="text" id="ott-username" name="username" value="{{username}}" placeholder="Username" required readonly>
+		""";
+	
+	private static final String ONE_TIME_USERNAME_INPUT = """
+		<input type="text" id="ott-username" name="username" placeholder="Username" required>
 		""";
 }
