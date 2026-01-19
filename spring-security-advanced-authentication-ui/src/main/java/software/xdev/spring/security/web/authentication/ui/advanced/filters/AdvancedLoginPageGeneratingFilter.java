@@ -16,18 +16,22 @@
 package software.xdev.spring.security.web.authentication.ui.advanced.filters;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.WeakHashMap;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.util.HtmlUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import software.xdev.spring.security.web.authentication.ui.advanced.AdditionalRegistrationData;
 import software.xdev.spring.security.web.authentication.ui.advanced.StylingDefinition;
@@ -39,6 +43,8 @@ public class AdvancedLoginPageGeneratingFilter
 	extends ExtendableDefaultLoginPageGeneratingFilter
 	implements AdvancedSharedPageGeneratingFilter<AdvancedLoginPageGeneratingFilter>
 {
+	protected final Map<String, UriComponentsBuilder> urlParseCache = Collections.synchronizedMap(new WeakHashMap<>());
+	
 	protected List<String> headerElements = new ArrayList<>(DEFAULT_HEADER_ELEMENTS);
 	
 	protected String pageTitle = "Please sign in";
@@ -78,6 +84,12 @@ public class AdvancedLoginPageGeneratingFilter
 	protected String ssoLoginHeaderText = "Login with";
 	
 	protected String footer = "";
+	
+	protected boolean useParameters = true;
+	protected FactorTypeAuthorities factorTypeAuthorities = new FactorTypeAuthorities();
+	
+	protected boolean preFillUsernameIfPossible = true;
+	protected boolean preFilledUsernameReadonly = true;
 	
 	@Override
 	public AdvancedLoginPageGeneratingFilter setHeaderElements(final List<String> headerElements)
@@ -220,6 +232,37 @@ public class AdvancedLoginPageGeneratingFilter
 		return this;
 	}
 	
+	/**
+	 * Should query parameters like e.g. {@link #factorTypeParameter} work?
+	 * <p>
+	 * Disabling it improves performance (e.g. path matching, query parameter extraction), however it will always
+	 * display all available login options and will not be able to show custom messages.
+	 * </p>
+	 */
+	public AdvancedLoginPageGeneratingFilter useParameters(final boolean useParameters)
+	{
+		this.useParameters = useParameters;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter factorTypeAuthorities(final FactorTypeAuthorities factorTypeAuthorities)
+	{
+		this.factorTypeAuthorities = factorTypeAuthorities;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter preFillUsernameIfPossible(final boolean preFillUsernameIfPossible)
+	{
+		this.preFillUsernameIfPossible = preFillUsernameIfPossible;
+		return this;
+	}
+	
+	public AdvancedLoginPageGeneratingFilter preFilledUsernameReadonly(final boolean preFilledUsernameReadonly)
+	{
+		this.preFilledUsernameReadonly = preFilledUsernameReadonly;
+		return this;
+	}
+	
 	protected Optional<AdditionalRegistrationData> additionalRegistrationData(
 		final Map<String, AdditionalRegistrationData> additionalRegistrationProperties,
 		final String url)
@@ -326,22 +369,55 @@ public class AdvancedLoginPageGeneratingFilter
 	{
 		final String errorMsg = loginError ? this.getLoginErrorMessage(request) : "Invalid credentials";
 		
+		final AuthoritiesActivations authoritiesActivations =
+			this.createAuthoritiesActivations(request, contextPath, loginError, logoutSuccess);
+		
+		final Optional<String> optPreDefinedEscapedUsername =
+			this.preFillUsernameIfPossible && authoritiesActivations.shouldResolveUsername()
+				? Optional.ofNullable(this.getUsername()).map(HtmlUtils::htmlEscape)
+				: Optional.empty();
+		
 		return "  " + this.createBodyElement()
 			+ "     " + this.createContainerElement()
 			+ "     " + this.createMainElement()
 			+ this.renderError(loginError, errorMsg)
 			+ this.renderLogoutSuccess(logoutSuccess)
 			+ this.header
-			+ this.createFormLogin(request, contextPath)
-			+ this.createOneTimeTokenLogin(request, contextPath)
-			+ this.createPasskeyFormLogin()
-			+ (this.hasSSOLogin() ? this.createHeaderLoginWith() : "")
-			+ this.createOAuth2LoginPagePart(contextPath)
-			+ this.createSaml2LoginPagePart(contextPath)
+			+ this.createFormLogin(request, contextPath, authoritiesActivations, optPreDefinedEscapedUsername)
+			+ this.createOneTimeTokenLogin(request, contextPath, authoritiesActivations, optPreDefinedEscapedUsername)
+			+ this.createPasskeyFormLogin(authoritiesActivations)
+			+ (this.hasSSOLogin(authoritiesActivations) ? this.createHeaderLoginWith() : "")
+			+ this.createOAuth2LoginPagePart(contextPath, authoritiesActivations)
+			+ this.createSaml2LoginPagePart(contextPath, authoritiesActivations)
 			+ this.footer
 			+ "    </main>"
 			+ "    </div>"
 			+ "  </body>";
+	}
+	
+	protected AuthoritiesActivations createAuthoritiesActivations(
+		final HttpServletRequest request,
+		final String contextPath,
+		final boolean loginError,
+		final boolean logoutSuccess)
+	{
+		return new AuthoritiesActivations(
+			this.wantsAuthority(request),
+			this.factorTypeAuthorities,
+			this.formLoginEnabled,
+			this.oneTimeTokenEnabled,
+			this.passkeysEnabled,
+			this.oauth2LoginEnabled,
+			this.saml2LoginEnabled
+		);
+	}
+	
+	@Override
+	protected Predicate<String> wantsAuthority(final HttpServletRequest request)
+	{
+		return this.useParameters
+			? super.wantsAuthority(request)
+			: s -> true;
 	}
 	
 	protected String createBodyElement()
@@ -402,9 +478,13 @@ public class AdvancedLoginPageGeneratingFilter
 	// region Render FormLogin
 	
 	@SuppressWarnings("java:S1192")
-	protected String createFormLogin(final HttpServletRequest request, final String contextPath)
+	protected String createFormLogin(
+		final HttpServletRequest request,
+		final String contextPath,
+		final AuthoritiesActivations authoritiesActivations,
+		final Optional<String> optPreDefinedEscapedUsername)
 	{
-		if(!this.formLoginEnabled)
+		if(!authoritiesActivations.formLogin())
 		{
 			return "";
 		}
@@ -412,7 +492,14 @@ public class AdvancedLoginPageGeneratingFilter
 		return "<form class=\"mb-3\" method=\"post\" action=\"" + contextPath + this.authenticationUrl + "\">"
 			+ "<div class='form-floating'>"
 			+ "  <input type='text' class='form-control' name=\"" + this.usernameParameter + "\""
-			+ " id='username' placeholder=\"" + this.formLoginUsernameText + "\" required autofocus>"
+			+ optPreDefinedEscapedUsername
+			.map(escapedName -> " value=\"" + escapedName + "\"")
+			.orElse("")
+			+ " id='username' placeholder=\"" + this.formLoginUsernameText + "\" required "
+			+ (this.preFilledUsernameReadonly && optPreDefinedEscapedUsername.isPresent()
+			? "readonly"
+			: "autofocus")
+			+ ">"
 			+ "  <label for='username'>" + this.formLoginUsernameText + "</label>"
 			+ "</div><div class='form-floating'>"
 			+ "  <input type='password' class='form-control' name=\"" + this.passwordParameter + "\""
@@ -443,9 +530,13 @@ public class AdvancedLoginPageGeneratingFilter
 	// endregion
 	// region Render OTT
 	
-	protected String createOneTimeTokenLogin(final HttpServletRequest request, final String contextPath)
+	protected String createOneTimeTokenLogin(
+		final HttpServletRequest request,
+		final String contextPath,
+		final AuthoritiesActivations authoritiesActivations,
+		final Optional<String> optPreDefinedEscapedUsername)
 	{
-		if(!this.oneTimeTokenEnabled)
+		if(!authoritiesActivations.ott())
 		{
 			return "";
 		}
@@ -455,7 +546,12 @@ public class AdvancedLoginPageGeneratingFilter
 			+ this.generateOneTimeTokenUrl + "\">"
 			+ "<div class='form-floating'>"
 			+ "  <input type='text' class='form-control' name=\"" + this.oneTimeTokenUsernameParameter + "\""
-			+ " id='ott-username' placeholder=\"" + this.oneTimeTokenUsernameText + "\" required>"
+			+ optPreDefinedEscapedUsername
+			.map(escapedName -> " value=\"" + escapedName + "\"")
+			.orElse("")
+			+ " id='ott-username' placeholder=\"" + this.oneTimeTokenUsernameText + "\" required"
+			+ (this.preFilledUsernameReadonly && optPreDefinedEscapedUsername.isPresent() ? "readonly" : "")
+			+ ">"
 			+ "  <label for='username'>" + this.oneTimeTokenUsernameText + "</label>"
 			+ "</div>"
 			+ this.renderHiddenInputs(request)
@@ -476,9 +572,9 @@ public class AdvancedLoginPageGeneratingFilter
 	// endregion
 	// region Render Passkeys
 	
-	protected String createPasskeyFormLogin()
+	protected String createPasskeyFormLogin(final AuthoritiesActivations authoritiesActivations)
 	{
-		if(!this.passkeysEnabled)
+		if(!authoritiesActivations.passkey())
 		{
 			return "";
 		}
@@ -505,9 +601,9 @@ public class AdvancedLoginPageGeneratingFilter
 	// endregion
 	// region Render SSO
 	
-	protected boolean hasSSOLogin()
+	protected boolean hasSSOLogin(final AuthoritiesActivations authoritiesActivations)
 	{
-		return this.oauth2LoginEnabled || this.saml2LoginEnabled;
+		return authoritiesActivations.oAuth2() || authoritiesActivations.saml2();
 	}
 	
 	protected String createHeaderLoginWith()
@@ -515,12 +611,15 @@ public class AdvancedLoginPageGeneratingFilter
 		return this.createLoginMethodHeader(this.ssoLoginHeaderText);
 	}
 	
-	protected String createOAuth2LoginPagePart(final String contextPath)
+	protected String createOAuth2LoginPagePart(
+		final String contextPath,
+		final AuthoritiesActivations authoritiesActivations)
 	{
-		if(!this.oauth2LoginEnabled)
+		if(!authoritiesActivations.oAuth2())
 		{
 			return "";
 		}
+		
 		return this.createSSOLoginPagePart(
 			contextPath,
 			"login-oauth2",
@@ -528,12 +627,15 @@ public class AdvancedLoginPageGeneratingFilter
 			this.additionalOAuth2RegistrationProperties);
 	}
 	
-	protected String createSaml2LoginPagePart(final String contextPath)
+	protected String createSaml2LoginPagePart(
+		final String contextPath,
+		final AuthoritiesActivations authoritiesActivations)
 	{
-		if(!this.saml2LoginEnabled)
+		if(!authoritiesActivations.saml2())
 		{
 			return "";
 		}
+		
 		return this.createSSOLoginPagePart(
 			contextPath,
 			"login-saml2",
@@ -591,6 +693,23 @@ public class AdvancedLoginPageGeneratingFilter
 	protected String renderHiddenInputs(final HttpServletRequest request)
 	{
 		return this.renderHiddenInputs(this.resolveHiddenInputs.apply(request).entrySet());
+	}
+	
+	@Override
+	protected String matchesGetUrlToCompare(final HttpServletRequest request, final String url)
+	{
+		if(!this.useParameters)
+		{
+			return url; // As was in Spring Boot 3.x
+		}
+		
+		return super.matchesGetUrlToCompare(request, url);
+	}
+	
+	@Override
+	protected UriComponentsBuilder matchesParseUriString(final String url)
+	{
+		return this.urlParseCache.computeIfAbsent(url, super::matchesParseUriString).cloneBuilder();
 	}
 	
 	// endregion
@@ -660,6 +779,133 @@ public class AdvancedLoginPageGeneratingFilter
 			{
 				return new AdditionalStylingData(this.body, this.container, this.main);
 			}
+		}
+	}
+	
+	
+	public static class AuthoritiesActivations // No record as it's extendable
+	{
+		protected boolean formLogin;
+		protected boolean ott;
+		protected boolean passkey;
+		protected boolean oAuth2;
+		protected boolean saml2;
+		
+		public AuthoritiesActivations(
+			final Predicate<String> wantsAuthority,
+			final FactorTypeAuthorities factorTypeAuthorities,
+			final boolean formLoginEnabled,
+			final boolean ottEnabled,
+			final boolean passkeyEnabled,
+			final boolean oAuth2Enabled,
+			final boolean saml2Enabled
+		)
+		{
+			this(
+				formLoginEnabled && wantsAuthority.test(factorTypeAuthorities.password()),
+				ottEnabled && wantsAuthority.test(factorTypeAuthorities.ott()),
+				passkeyEnabled && wantsAuthority.test(factorTypeAuthorities.passkey()),
+				oAuth2Enabled && wantsAuthority.test(factorTypeAuthorities.oauth2()),
+				saml2Enabled && wantsAuthority.test(factorTypeAuthorities.saml2())
+			);
+		}
+		
+		public AuthoritiesActivations(
+			final boolean formLogin,
+			final boolean ott,
+			final boolean passkey,
+			final boolean oAuth2,
+			final boolean saml2)
+		{
+			this.formLogin = formLogin;
+			this.ott = ott;
+			this.passkey = passkey;
+			this.oAuth2 = oAuth2;
+			this.saml2 = saml2;
+		}
+		
+		public boolean formLogin()
+		{
+			return this.formLogin;
+		}
+		
+		public boolean ott()
+		{
+			return this.ott;
+		}
+		
+		public boolean passkey()
+		{
+			return this.passkey;
+		}
+		
+		public boolean oAuth2()
+		{
+			return this.oAuth2;
+		}
+		
+		public boolean saml2()
+		{
+			return this.saml2;
+		}
+		
+		public boolean shouldResolveUsername()
+		{
+			return this.formLogin() || this.ott();
+		}
+	}
+	
+	
+	public static class FactorTypeAuthorities // No record as it may require extension
+	{
+		protected final String password;
+		protected final String ott;
+		protected final String passkey;
+		protected final String oauth2;
+		protected final String saml2;
+		
+		public FactorTypeAuthorities(
+			final String password,
+			final String ott,
+			final String passkey,
+			final String oauth2,
+			final String saml2)
+		{
+			this.password = Objects.requireNonNull(password);
+			this.ott = Objects.requireNonNull(ott);
+			this.passkey = Objects.requireNonNull(passkey);
+			this.oauth2 = Objects.requireNonNull(oauth2);
+			this.saml2 = Objects.requireNonNull(saml2);
+		}
+		
+		public FactorTypeAuthorities()
+		{
+			this("password", "ott", "webauthn", "authorization_code", "saml_response");
+		}
+		
+		public String password()
+		{
+			return this.password;
+		}
+		
+		public String ott()
+		{
+			return this.ott;
+		}
+		
+		public String passkey()
+		{
+			return this.passkey;
+		}
+		
+		public String oauth2()
+		{
+			return this.oauth2;
+		}
+		
+		public String saml2()
+		{
+			return this.saml2;
 		}
 	}
 }

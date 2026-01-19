@@ -26,12 +26,15 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.ObjectPostProcessor;
+import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.DefaultLoginPageConfigurer;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolderStrategy;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 
@@ -111,6 +114,12 @@ class AdapterTest
 			new HashMap<>());
 		
 		final DefaultLoginPageConfigurer<HttpSecurity> defaultLoginPageConfigurer = new DefaultLoginPageConfigurer<>();
+		
+		final Field fSecurityContextHolderStrategy =
+			AbstractHttpConfigurer.class.getDeclaredField("securityContextHolderStrategy");
+		fSecurityContextHolderStrategy.setAccessible(true);
+		fSecurityContextHolderStrategy.set(defaultLoginPageConfigurer, new DummySecurityContextHolderStrategy());
+		
 		http
 			.with(defaultLoginPageConfigurer, Customizer.withDefaults())
 			.logout(Customizer.withDefaults());
@@ -170,5 +179,32 @@ class AdapterTest
 		AdvancedLogoutPageGeneratingFilter advancedLogoutPageGeneratingFilter
 	)
 	{
+	}
+	
+	
+	@SuppressWarnings("java:S1186")
+	static class DummySecurityContextHolderStrategy implements SecurityContextHolderStrategy
+	{
+		@Override
+		public void clearContext()
+		{
+		}
+		
+		@Override
+		public SecurityContext getContext()
+		{
+			return new SecurityContextImpl();
+		}
+		
+		@Override
+		public void setContext(final SecurityContext context)
+		{
+		}
+		
+		@Override
+		public SecurityContext createEmptyContext()
+		{
+			return new SecurityContextImpl();
+		}
 	}
 }
