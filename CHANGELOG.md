@@ -1,5 +1,6 @@
 # 3.0.0
 * Updated to Spring Boot 4.x
+* Updated bootstrap to latest version
 
 # 2.1.2
 _Last expected version for Spring Boot 3.x_
