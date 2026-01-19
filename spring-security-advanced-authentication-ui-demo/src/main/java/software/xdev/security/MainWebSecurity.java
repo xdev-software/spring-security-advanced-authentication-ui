@@ -37,16 +37,16 @@ public class MainWebSecurity
 	
 	protected void customizeLogin(
 		final HttpSecurity http,
-		final AdditionalOAuth2ClientProperties additionalOAuth2ClientProperties) throws Exception
+		final AdditionalOAuth2ClientProperties additionalOAuth2ClientProperties)
 	{
 		http.with(
 			new AdvancedLoginPageAdapter<>(http), c -> c
 				.customizePages(p -> p
 					// No remote communication -> Use local resources
 					.setHeaderElements(List.of(
-						"<link href=\"/lib/bootstrap-5.3.3.min.css\" rel=\"stylesheet\"/>",
+						"<link href=\"/lib/bootstrap.min.css\" rel=\"stylesheet\"/>",
 						"<link href=\"/lib/theme.css\" rel=\"stylesheet\"/>",
-						"<script src=\"/lib/bootstrap-5.3.3.bundle.min.js\"></script>",
+						"<script src=\"/lib/bootstrap.bundle.min.js\"></script>",
 						"<script src=\"/lib/theme.js\"></script>"
 					)))
 				.customizeLoginPage(p -> p
