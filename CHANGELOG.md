@@ -1,3 +1,7 @@
+# 2.1.2
+_Last expected version for Spring Boot 3.x_
+* Updated dependencies
+
 # 2.1.1
 * Updated dependencies
 
