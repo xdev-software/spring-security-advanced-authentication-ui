@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<licensePluginReport goal="FORMAT" timestamp="1768833096889">
+    <module artifactId="spring-security-advanced-authentication-ui" groupId="software.xdev" version="3.0.0"/>
+    <files>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/advanced/AdditionalRegistrationData.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/advanced/AdvancedLoginPageAdapter.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/advanced/StylingDefinition.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/advanced/config/AdditionalOAuth2ClientProperties.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/advanced/filters/AdvancedLoginPageGeneratingFilter.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/advanced/filters/AdvancedLogoutPageGeneratingFilter.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/advanced/filters/AdvancedSharedPageGeneratingFilter.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/extendable/ExtendableLoginPageAdapter.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/extendable/FieldAccessor.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/extendable/filters/ExtendableDefaultLoginPageGeneratingFilter.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/extendable/filters/ExtendableDefaultLogoutPageGeneratingFilter.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/extendable/filters/ExtendableDefaultPageGeneratingFilter.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/extendable/filters/GeneratingFilterFillDataFrom.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/spring/security/web/authentication/ui/extendable/filters/HtmlTemplates.java" result="NOOP"/>
+        <file path="src/test/java/software/xdev/spring/security/web/authentication/ui/advanced/AdapterTest.java" result="NOOP"/>
+        <file path="src/test/java/software/xdev/spring/security/web/authentication/ui/extendable/filters/ExtendableDefaultPageGeneratingFilterTest.java" result="NOOP"/>
+    </files>
+</licensePluginReport>
