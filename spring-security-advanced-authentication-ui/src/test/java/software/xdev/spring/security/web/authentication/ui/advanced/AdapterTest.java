@@ -45,7 +45,7 @@ import software.xdev.spring.security.web.authentication.ui.extendable.Extendable
 
 class AdapterTest
 {
-	public static final String EXAMPLE_URL = "https://example.org";
+	static final String EXAMPLE_URL = "https://example.org";
 	
 	@Test
 	void checkInstallAdapterConstructor() throws Exception

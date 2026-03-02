@@ -257,7 +257,7 @@ public abstract class ExtendableLoginPageAdapter<
 		Class<B> baseFilterClass,
 		F filter)
 	{
-		public void filterFillDataFrom(final Object source)
+		void filterFillDataFrom(final Object source)
 		{
 			Optional.ofNullable(source)
 				.filter(this.baseFilterClass()::isInstance)
