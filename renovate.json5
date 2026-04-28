@@ -4,7 +4,7 @@
   "packageRules": [
     {
       "description": "Ignore project internal dependencies",
-      "packagePattern": "^software.xdev:template-placeholder",
+      "packagePattern": "^software.xdev:spring-security-advanced-authentication-ui",
       "datasources": [
         "maven"
       ],
@@ -19,6 +19,16 @@
         "maven"
       ],
       "groupName": "net.sourceforge.pmd"
+    },
+    {
+      "description": "Group Spring Boot",
+      "matchPackagePatterns": [
+        "^org.springframework.boot"
+      ],
+      "datasources": [
+        "maven"
+      ],
+      "groupName": "org.springframework.boot"
     }
   ]
 }
