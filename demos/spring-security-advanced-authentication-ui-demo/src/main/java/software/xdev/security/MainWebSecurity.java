@@ -35,6 +35,7 @@ public class MainWebSecurity
 {
 	private static final Logger LOG = LoggerFactory.getLogger(MainWebSecurity.class);
 	
+	@SuppressWarnings("java:S8688")
 	protected void customizeLogin(
 		final HttpSecurity http,
 		final AdditionalOAuth2ClientProperties additionalOAuth2ClientProperties)
@@ -73,7 +74,7 @@ public class MainWebSecurity
 	@Bean(name = "mainSecurityFilterChainBean")
 	public SecurityFilterChain configure(
 		final HttpSecurity http,
-		final AdditionalOAuth2ClientProperties additionalOAuth2ClientProperties) throws Exception
+		final AdditionalOAuth2ClientProperties additionalOAuth2ClientProperties)
 	{
 		this.customizeLogin(http, additionalOAuth2ClientProperties);
 		

@@ -1,3 +1,8 @@
+# 3.0.1
+* Synchronized code with latest Spring Security versions
+* Abstracted username form generation
+* Updated dependencies
+
 # 3.0.0
 * Updated to Spring Boot 4.x
 * Updated bootstrap to latest version
@@ -11,7 +16,7 @@ _Last expected version for Spring Boot 3.x_
 
 # 2.1.0
 * Updated to Spring Security 6.5+ / Spring Boot 3.5+
-  * [``Extendable``] Backported some minor upstream changes
+  * [`Extendable`] Backported some minor upstream changes
 
 # 2.0.1
 * Migrated deployment to _Sonatype Maven Central Portal_ [#155](https://github.com/xdev-software/standard-maven-template/issues/155)
@@ -23,7 +28,7 @@ _Last expected version for Spring Boot 3.x_
     * uses a Regex-based templating system
     * no longer uses bootstrap
     * provides One-Time token/OTT and Passkey logins
-* Changes to ``Extendable``-subsystem
+* Changes to `Extendable`-subsystem
   * Now uses the new Regex-based templating system
   * Correct a bunch of problems in Spring Security including
     * One-Time token/OTT and Passkeys are ignored when computing if the whole filter is enabled
@@ -33,7 +38,7 @@ _Last expected version for Spring Boot 3.x_
     * [HtmlTemplating] Render: Optimization: Use entrySet instead of keySet + getValue
     * Add correct setter for ``generateOneTimeTokenUrl``
     * Improved naming of methods
-* Changes to ``Advanced``-subsystem
+* Changes to `Advanced`-subsystem
   * Keeps using Bootstrap
     * By default bootstrap is still loaded from ``cdn.jsdelivr.net`` but you can (and should) provide your own version
   * Keeps using the old templating system (without Regex)
@@ -48,10 +53,10 @@ _Last expected version for Spring Boot 3.x_
 * Abstracted code
 
 # 1.0.2
-* Fix incorrect styling of ``main`` element on login screen
+* Fix incorrect styling of `main` element on login screen
 
 # 1.0.1
-* Fix NPE when ``additionalStylingData`` is not set
+* Fix NPE when `additionalStylingData` is not set
 
 # 1.0.0
 <i>Initial release</i>

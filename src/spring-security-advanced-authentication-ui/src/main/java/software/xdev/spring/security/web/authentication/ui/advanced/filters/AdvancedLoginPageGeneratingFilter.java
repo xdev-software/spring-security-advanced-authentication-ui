@@ -490,18 +490,12 @@ public class AdvancedLoginPageGeneratingFilter
 		}
 		
 		return "<form class=\"mb-3\" method=\"post\" action=\"" + contextPath + this.authenticationUrl + "\">"
+			+ this.createDivFormUsernameLikeInput(
+			"username",
+			this.usernameParameter,
+			this.formLoginUsernameText,
+			optPreDefinedEscapedUsername)
 			+ "<div class='form-floating'>"
-			+ "  <input type='text' class='form-control' name=\"" + this.usernameParameter + "\""
-			+ optPreDefinedEscapedUsername
-			.map(escapedName -> " value=\"" + escapedName + "\"")
-			.orElse("")
-			+ " id='username' placeholder=\"" + this.formLoginUsernameText + "\" required "
-			+ (this.preFilledUsernameReadonly && optPreDefinedEscapedUsername.isPresent()
-			? "readonly"
-			: "autofocus")
-			+ ">"
-			+ "  <label for='username'>" + this.formLoginUsernameText + "</label>"
-			+ "</div><div class='form-floating'>"
 			+ "  <input type='password' class='form-control' name=\"" + this.passwordParameter + "\""
 			+ " id='password' placeholder=\"" + this.formLoginPasswordText + "\" required>"
 			+ "  <label for='password'>" + this.formLoginPasswordText + "</label>"
@@ -510,6 +504,24 @@ public class AdvancedLoginPageGeneratingFilter
 			+ this.renderHiddenInputs(request)
 			+ this.createFormLoginSignInButton()
 			+ "</form>";
+	}
+	
+	protected String createDivFormUsernameLikeInput(
+		final String id,
+		final String name,
+		final String placeholder,
+		final Optional<String> optPreDefinedEscapedUsername)
+	{
+		return "<div class='form-floating'>"
+			+ "  <input type='text' class='form-control' name=\"" + name + "\""
+			+ optPreDefinedEscapedUsername
+			.map(escapedName -> " value=\"" + escapedName + "\"")
+			.orElse("")
+			+ " id='" + id + "' placeholder=\"" + placeholder + "\" required "
+			+ (this.preFilledUsernameReadonly && optPreDefinedEscapedUsername.isPresent() ? "readonly" : "autofocus")
+			+ ">"
+			+ "  <label for='" + id + "'>" + placeholder + "</label>"
+			+ "</div>";
 	}
 	
 	protected String createRememberMe(final String paramName)
@@ -544,16 +556,11 @@ public class AdvancedLoginPageGeneratingFilter
 		return this.createOneTimeTokenLoginHeader()
 			+ "<form id=\"ott-form\" class=\"mb-3\" method=\"post\" action=\"" + contextPath
 			+ this.generateOneTimeTokenUrl + "\">"
-			+ "<div class='form-floating'>"
-			+ "  <input type='text' class='form-control' name=\"" + this.oneTimeTokenUsernameParameter + "\""
-			+ optPreDefinedEscapedUsername
-			.map(escapedName -> " value=\"" + escapedName + "\"")
-			.orElse("")
-			+ " id='ott-username' placeholder=\"" + this.oneTimeTokenUsernameText + "\" required"
-			+ (this.preFilledUsernameReadonly && optPreDefinedEscapedUsername.isPresent() ? "readonly" : "")
-			+ ">"
-			+ "  <label for='username'>" + this.oneTimeTokenUsernameText + "</label>"
-			+ "</div>"
+			+ this.createDivFormUsernameLikeInput(
+			"ott-username",
+			this.oneTimeTokenUsernameParameter,
+			this.oneTimeTokenUsernameText,
+			optPreDefinedEscapedUsername)
 			+ this.renderHiddenInputs(request)
 			+ this.createOneTimeTokenLoginSignInButton()
 			+ "</form>";

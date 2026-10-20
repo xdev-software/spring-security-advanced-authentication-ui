@@ -553,12 +553,15 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 			? HtmlTemplates.fromTemplate(ONE_TIME_READONLY_USERNAME_INPUT).withValue("username", username).render()
 			: ONE_TIME_USERNAME_INPUT;
 		
+		final String buttonAutofocus = (username != null) ? " autofocus" : "";
+		
 		return HtmlTemplates.fromTemplate(ONE_TIME_TEMPLATE)
 			.withValue("generateOneTimeTokenUrl", contextPath + this.generateOneTimeTokenUrl)
 			.withRawHtml("errorMessage", this.renderError(loginError, errorMsg))
 			.withRawHtml("logoutMessage", this.renderSuccess(logoutSuccess))
 			.withRawHtml("hiddenInputs", hiddenInputs)
 			.withRawHtml("usernameInput", usernameInput)
+			.withRawHtml("buttonAutofocus", buttonAutofocus)
 			.render();
 	}
 	
@@ -775,7 +778,7 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		          {{usernameInput}}
 		        </p>
 		{{hiddenInputs}}
-		        <button class="primary" type="submit" form="ott-form">Send Token</button>
+		        <button class="primary" type="submit" form="ott-form"{{buttonAutofocus}}>Send Token</button>
 		      </form>
 		""";
 	
@@ -784,6 +787,6 @@ public class ExtendableDefaultLoginPageGeneratingFilter
 		""";
 	
 	private static final String ONE_TIME_USERNAME_INPUT = """
-		<input type="text" id="ott-username" name="username" placeholder="Username" required>
+		<input type="text" id="ott-username" name="username" placeholder="Username" required autofocus>
 		""";
 }
