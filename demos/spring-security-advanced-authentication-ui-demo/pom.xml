@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>software.xdev</groupId>
 		<artifactId>demos</artifactId>
-		<version>3.0.1</version>
+		<version>3.0.2-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>spring-security-advanced-authentication-ui-demo</artifactId>
