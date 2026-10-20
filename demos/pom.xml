@@ -7,13 +7,13 @@
 	<parent>
 		<groupId>software.xdev</groupId>
 		<artifactId>root</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>3.0.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>demos</artifactId>
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>template-placeholder-demo</module>
+		<module>spring-security-advanced-authentication-ui-demo</module>
 	</modules>
 </project>
