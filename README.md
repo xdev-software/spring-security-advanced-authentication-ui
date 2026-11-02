@@ -29,7 +29,7 @@ public SecurityFilterChain configure(final HttpSecurity http) throws Exception
 }
 ```
 
-A more detailed scenario is available in the [demo](./spring-security-advanced-authentication-ui-demo/).
+A more detailed scenario is available in the [demo](./demos/spring-security-advanced-authentication-ui-demo/).
 
 > [!IMPORTANT]
 > By default [Bootstrap](https://github.com/twbs/bootstrap) is loaded from `cdn.jsdelivr.net`.<br/>
