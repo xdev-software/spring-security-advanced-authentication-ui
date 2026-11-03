@@ -15,7 +15,7 @@
     {
       "description": "Ignore project internal dependencies",
       "matchPackagePatterns": [
-        "^software.xdev.*:template-placeholder",
+        "^software.xdev.*:spring-security-advanced-authentication-ui",
         "^software.xdev.*:demos",
         "^software.xdev.*:src",
         "^software.xdev.*:root"
@@ -34,6 +34,16 @@
         "maven"
       ],
       "groupName": "net.sourceforge.pmd"
+    },
+    {
+      "description": "Group Spring Boot",
+      "matchPackagePatterns": [
+        "^org.springframework.boot"
+      ],
+      "datasources": [
+        "maven"
+      ],
+      "groupName": "org.springframework.boot"
     }
   ]
 }
