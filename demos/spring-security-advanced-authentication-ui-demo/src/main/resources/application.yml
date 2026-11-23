@@ -1,0 +1,37 @@
+server:
+  servlet:
+    session:
+      # Stateless
+      persistence: false
+      persistent: false
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          local:
+            client-name: Local
+            client-id: client-id
+            client-secret: client-secret
+            scope: openid,profile,email,offline_access
+          gitlab:
+            client-id: YOUR-GITLAB-CLIENT-ID
+            client-name: GitLab
+            client-secret: YOUR-GITLAB-CLIENT-SECRET
+            color: '#171321'
+            icon-src: data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjkzLjk3IDk3LjUyIDE5Mi4wNyAxODUiPjxkZWZzPjxzdHlsZT4uY2xzLTJ7ZmlsbDojZmM2ZDI2fTwvc3R5bGU+PC9kZWZzPjxnIGlkPSJMT0dPIj48cGF0aCBkPSJtMjgyLjgzIDE3MC43My0uMjctLjY5LTI2LjE0LTY4LjIyYTYuODEgNi44MSAwIDAgMC0yLjY5LTMuMjQgNyA3IDAgMCAwLTggLjQzIDcgNyAwIDAgMC0yLjMyIDMuNTJsLTE3LjY1IDU0aC03MS40N2wtMTcuNjUtNTRhNi44NiA2Ljg2IDAgMCAwLTIuMzItMy41MyA3IDcgMCAwIDAtOC0uNDMgNi44NyA2Ljg3IDAgMCAwLTIuNjkgMy4yNEw5Ny40NCAxNzBsLS4yNi42OWE0OC41NCA0OC41NCAwIDAgMCAxNi4xIDU2LjFsLjA5LjA3LjI0LjE3IDM5LjgyIDI5LjgyIDE5LjcgMTQuOTEgMTIgOS4wNmE4LjA3IDguMDcgMCAwIDAgOS43NiAwbDEyLTkuMDYgMTkuNy0xNC45MSA0MC4wNi0zMCAuMS0uMDhhNDguNTYgNDguNTYgMCAwIDAgMTYuMDgtNTYuMDRaIiBzdHlsZT0iZmlsbDojZTI0MzI5Ii8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJtMjgyLjgzIDE3MC43My0uMjctLjY5YTg4LjMgODguMyAwIDAgMC0zNS4xNSAxNS44TDE5MCAyMjkuMjVjMTkuNTUgMTQuNzkgMzYuNTcgMjcuNjQgMzYuNTcgMjcuNjRsNDAuMDYtMzAgLjEtLjA4YTQ4LjU2IDQ4LjU2IDAgMCAwIDE2LjEtNTYuMDhaIi8+PHBhdGggZD0ibTE1My40MyAyNTYuODkgMTkuNyAxNC45MSAxMiA5LjA2YTguMDcgOC4wNyAwIDAgMCA5Ljc2IDBsMTItOS4wNiAxOS43LTE0LjkxUzIwOS41NSAyNDQgMTkwIDIyOS4yNWMtMTkuNTUgMTQuNzUtMzYuNTcgMjcuNjQtMzYuNTcgMjcuNjRaIiBzdHlsZT0iZmlsbDojZmNhMzI2Ii8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMTMyLjU4IDE4NS44NEE4OC4xOSA4OC4xOSAwIDAgMCA5Ny40NCAxNzBsLS4yNi42OWE0OC41NCA0OC41NCAwIDAgMCAxNi4xIDU2LjFsLjA5LjA3LjI0LjE3IDM5LjgyIDI5LjgyTDE5MCAyMjkuMjFaIi8+PC9nPjwvc3ZnPg==
+            scope: openid,profile,email
+          google:
+            client-id: YOUR-GOOGLE-CLIENT-ID
+            client-name: Google
+            client-secret: YOUR-GOOGLE-CLIENT-SECRET
+            color: white
+            icon-src: data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0Ij48cGF0aCBkPSJNMjIuNTYgMTIuMjVjMC0uNzgtLjA3LTEuNTMtLjItMi4yNUgxMnY0LjI2aDUuOTJjLS4yNiAxLjM3LTEuMDQgMi41My0yLjIxIDMuMzF2Mi43N2gzLjU3YzIuMDgtMS45MiAzLjI4LTQuNzQgMy4yOC04LjA5eiIgZmlsbD0iIzQyODVGNCIvPjxwYXRoIGQ9Ik0xMiAyM2MyLjk3IDAgNS40Ni0uOTggNy4yOC0yLjY2bC0zLjU3LTIuNzdjLS45OC42Ni0yLjIzIDEuMDYtMy43MSAxLjA2LTIuODYgMC01LjI5LTEuOTMtNi4xNi00LjUzSDIuMTh2Mi44NEMzLjk5IDIwLjUzIDcuNyAyMyAxMiAyM3oiIGZpbGw9IiMzNEE4NTMiLz48cGF0aCBkPSJNNS44NCAxNC4wOWMtLjIyLS42Ni0uMzUtMS4zNi0uMzUtMi4wOXMuMTMtMS40My4zNS0yLjA5VjcuMDdIMi4xOEMxLjQzIDguNTUgMSAxMC4yMiAxIDEycy40MyAzLjQ1IDEuMTggNC45M2wyLjg1LTIuMjIuODEtLjYyeiIgZmlsbD0iI0ZCQkMwNSIvPjxwYXRoIGQ9Ik0xMiA1LjM4YzEuNjIgMCAzLjA2LjU2IDQuMjEgMS42NGwzLjE1LTMuMTVDMTcuNDUgMi4wOSAxNC45NyAxIDEyIDEgNy43IDEgMy45OSAzLjQ3IDIuMTggNy4wN2wzLjY2IDIuODRjLjg3LTIuNiAzLjMtNC41MyA2LjE2LTQuNTN6IiBmaWxsPSIjRUE0MzM1Ii8+PHBhdGggZD0iTTEgMWgyMnYyMkgxeiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==
+            invert-text-color: true
+            scope: openid,profile,email
+        provider:
+          local:
+            issuer-uri: http://localhost:4011
+          gitlab:
+            issuer-uri: http://localhost:4011
